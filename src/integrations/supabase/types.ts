@@ -20,7 +20,9 @@ export type Database = {
           cost_value: string | null
           id: string
           rpi_count: number | null
+          session_duration_seconds: number | null
           session_id: string
+          session_start_at: string | null
           shared_condition: boolean | null
           shared_cost: boolean | null
           shared_wait_time: boolean | null
@@ -32,7 +34,9 @@ export type Database = {
           cost_value?: string | null
           id?: string
           rpi_count?: number | null
+          session_duration_seconds?: number | null
           session_id: string
+          session_start_at?: string | null
           shared_condition?: boolean | null
           shared_cost?: boolean | null
           shared_wait_time?: boolean | null
@@ -44,7 +48,9 @@ export type Database = {
           cost_value?: string | null
           id?: string
           rpi_count?: number | null
+          session_duration_seconds?: number | null
           session_id?: string
+          session_start_at?: string | null
           shared_condition?: boolean | null
           shared_cost?: boolean | null
           shared_wait_time?: boolean | null
@@ -117,36 +123,48 @@ export type Database = {
       exp3_contribution: {
         Row: {
           final_contributed: boolean | null
+          final_decision_at: string | null
           id: string
           incentive_shown: boolean | null
+          incentive_shown_at: string | null
+          initial_prompt_at: string | null
           initial_prompt_response: Database["public"]["Enums"]["contribution_response"]
           post_incentive_response:
             | Database["public"]["Enums"]["contribution_response"]
             | null
           session_id: string
           submitted_at: string | null
+          total_duration_seconds: number | null
         }
         Insert: {
           final_contributed?: boolean | null
+          final_decision_at?: string | null
           id?: string
           incentive_shown?: boolean | null
+          incentive_shown_at?: string | null
+          initial_prompt_at?: string | null
           initial_prompt_response: Database["public"]["Enums"]["contribution_response"]
           post_incentive_response?:
             | Database["public"]["Enums"]["contribution_response"]
             | null
           session_id: string
           submitted_at?: string | null
+          total_duration_seconds?: number | null
         }
         Update: {
           final_contributed?: boolean | null
+          final_decision_at?: string | null
           id?: string
           incentive_shown?: boolean | null
+          incentive_shown_at?: string | null
+          initial_prompt_at?: string | null
           initial_prompt_response?: Database["public"]["Enums"]["contribution_response"]
           post_incentive_response?:
             | Database["public"]["Enums"]["contribution_response"]
             | null
           session_id?: string
           submitted_at?: string | null
+          total_duration_seconds?: number | null
         }
         Relationships: [
           {

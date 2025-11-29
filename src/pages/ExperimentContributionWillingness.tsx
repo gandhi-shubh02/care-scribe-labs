@@ -16,6 +16,11 @@ export default function ExperimentContributionWillingness() {
   const [showedIncentive, setShowedIncentive] = useState(false);
   const [postIncentiveResponse, setPostIncentiveResponse] = useState<"yes" | "no" | null>(null);
   const [finalContributed, setFinalContributed] = useState(false);
+  
+  // Time tracking
+  const [initialPromptTime] = useState<Date>(new Date());
+  const [incentiveShownTime, setIncentiveShownTime] = useState<Date | null>(null);
+  const [finalDecisionTime, setFinalDecisionTime] = useState<Date | null>(null);
 
   useEffect(() => {
     supabase.from("experiment_sessions").insert({
@@ -24,19 +29,24 @@ export default function ExperimentContributionWillingness() {
       user_session_id: `contrib_${Date.now()}`,
       status: "started",
     });
-  }, [sessionId]);
+    console.log("Experiment 3 started at:", initialPromptTime.toISOString());
+  }, [sessionId, initialPromptTime]);
 
   const handleInitialResponse = (response: "yes" | "no") => {
     setInitialResponse(response);
+    const decisionTime = new Date();
+    setFinalDecisionTime(decisionTime);
 
     if (response === "yes") {
       // User said yes immediately
       setFinalContributed(true);
       setStage("final");
-      submitData(response, false, null, true);
+      submitData(response, false, null, true, decisionTime);
     } else {
       // User said no, show incentive
       setShowedIncentive(true);
+      const incentiveTime = new Date();
+      setIncentiveShownTime(incentiveTime);
       setStage("incentive");
     }
   };
@@ -44,19 +54,24 @@ export default function ExperimentContributionWillingness() {
   const handlePostIncentiveResponse = (response: "yes" | "no") => {
     setPostIncentiveResponse(response);
     setFinalContributed(response === "yes");
+    const decisionTime = new Date();
+    setFinalDecisionTime(decisionTime);
     setStage("final");
-    submitData(initialResponse!, true, response, response === "yes");
+    submitData(initialResponse!, true, response, response === "yes", decisionTime);
   };
 
   const submitData = async (
     initial: "yes" | "no",
     incentiveShown: boolean,
     postIncentive: "yes" | "no" | null,
-    contributed: boolean
+    contributed: boolean,
+    decisionTime: Date
   ) => {
+    const totalDurationSeconds = Math.floor((decisionTime.getTime() - initialPromptTime.getTime()) / 1000);
+    
     await supabase.from("experiment_sessions").update({
       status: "completed",
-      completed_at: new Date().toISOString(),
+      completed_at: decisionTime.toISOString(),
     }).eq("id", sessionId);
 
     await supabase.from("exp3_contribution").insert({
@@ -65,8 +80,13 @@ export default function ExperimentContributionWillingness() {
       incentive_shown: incentiveShown,
       post_incentive_response: postIncentive,
       final_contributed: contributed,
+      initial_prompt_at: initialPromptTime.toISOString(),
+      incentive_shown_at: incentiveShownTime?.toISOString(),
+      final_decision_at: decisionTime.toISOString(),
+      total_duration_seconds: totalDurationSeconds,
     });
 
+    console.log("Experiment 3 completed in", totalDurationSeconds, "seconds");
     toast({ title: "Response Recorded", description: "Thank you for participating!" });
     setTimeout(() => setStage("complete"), 2000);
   };

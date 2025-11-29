@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -17,9 +17,17 @@ export default function ExperimentAnonymousForm() {
   const [conditionValue, setConditionValue] = useState("");
   const [waitTimeValue, setWaitTimeValue] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [startTime] = useState<Date>(new Date());
+
+  useEffect(() => {
+    // Track session start time in component mount
+    console.log("Experiment 1 started at:", startTime.toISOString());
+  }, [startTime]);
 
   const handleSubmit = async () => {
     const sessionId = crypto.randomUUID();
+    const endTime = new Date();
+    const durationSeconds = Math.floor((endTime.getTime() - startTime.getTime()) / 1000);
     const rpiCount = (shareCost ? 1 : 0) + (shareCondition ? 1 : 0) + (shareWaitTime ? 1 : 0);
 
     await supabase.from("experiment_sessions").insert({
@@ -27,7 +35,7 @@ export default function ExperimentAnonymousForm() {
       experiment_id: "exp1_anonymous",
       user_session_id: `anon_${Date.now()}`,
       status: "completed",
-      completed_at: new Date().toISOString(),
+      completed_at: endTime.toISOString(),
     });
 
     await supabase.from("exp1_responses").insert({
@@ -39,8 +47,11 @@ export default function ExperimentAnonymousForm() {
       condition_value: shareCondition ? conditionValue : null,
       wait_time_value: shareWaitTime ? waitTimeValue : null,
       rpi_count: rpiCount,
+      session_start_at: startTime.toISOString(),
+      session_duration_seconds: durationSeconds,
     });
 
+    console.log("Experiment 1 completed in", durationSeconds, "seconds");
     setSubmitted(true);
     toast({ title: "Response Submitted", description: "Thank you for participating!" });
   };
