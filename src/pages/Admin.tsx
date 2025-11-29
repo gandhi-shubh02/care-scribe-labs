@@ -26,14 +26,26 @@ export default function Admin() {
 
     if (exp2) {
       const completed = exp2.filter((r) => r.completed_successfully).length;
-      const avgDuration = exp2.reduce((sum, r) => sum + (r.total_duration_seconds || 0), 0) / exp2.length || 0;
-      setExp2Data({ total: exp2.length, completed, avgDuration });
+      const completedWithinTarget = exp2.filter((r) => r.completed_successfully && (r.total_duration_seconds || 0) <= 120).length;
+      const avgDuration = exp2.length > 0 
+        ? exp2.reduce((sum, r) => sum + (r.total_duration_seconds || 0), 0) / exp2.length 
+        : 0;
+      setExp2Data({ 
+        total: exp2.length, 
+        completed: completedWithinTarget, 
+        avgDuration 
+      });
     }
 
     if (exp3) {
-      const yesCount = exp3.filter((r) => r.initial_prompt_response === "yes" || r.final_contributed).length;
-      const incentiveCount = exp3.filter((r) => r.incentive_shown && r.final_contributed).length;
-      setExp3Data({ total: exp3.length, yesCount, incentiveCount });
+      const yesImmediately = exp3.filter((r) => r.initial_prompt_response === "yes").length;
+      const yesAfterIncentive = exp3.filter((r) => r.incentive_shown && r.final_contributed).length;
+      const totalYes = exp3.filter((r) => r.final_contributed).length;
+      setExp3Data({ 
+        total: exp3.length, 
+        yesCount: totalYes, 
+        incentiveCount: yesAfterIncentive 
+      });
     }
   };
 
@@ -53,44 +65,159 @@ export default function Admin() {
       </nav>
 
       <div className="container mx-auto px-4 py-12">
-        <h1 className="text-4xl font-bold mb-8">Experiment Analytics</h1>
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-4xl font-bold">Experiment Analytics</h1>
+          <Button onClick={fetchAnalytics} variant="outline">
+            Refresh Data
+          </Button>
+        </div>
 
-        <div className="grid md:grid-cols-3 gap-6">
-          <Card className="p-6">
-            <h3 className="text-xl font-bold mb-4">Exp 1: Anonymous Form</h3>
-            <div className="space-y-3">
-              <div><span className="text-muted-foreground">Total Responses:</span> <span className="font-bold">{exp1Data.total}</span></div>
-              <div><span className="text-muted-foreground">With RPI:</span> <span className="font-bold">{exp1Data.withRPI}</span></div>
-              <div className="pt-3 border-t">
-                <div className="text-sm text-muted-foreground mb-1">RPI Share Rate</div>
-                <div className="text-3xl font-bold text-primary">{exp1Data.percentage.toFixed(1)}%</div>
-                {exp1Data.percentage >= 20 ? <CheckCircle2 className="h-5 w-5 text-primary mt-2" /> : null}
+        <div className="grid lg:grid-cols-3 gap-6">
+          {/* Experiment 1 */}
+          <Card className="p-6 border-border">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold">Exp 1: Anonymous Form</h3>
+              <Users className="h-5 w-5 text-primary" />
+            </div>
+            
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Total Responses</span>
+                <span className="text-2xl font-bold">{exp1Data.total}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Shared RPI</span>
+                <span className="text-2xl font-bold">{exp1Data.withRPI}</span>
+              </div>
+
+              <div className="pt-4 border-t border-border">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-muted-foreground">RPI Share Rate</span>
+                  {exp1Data.percentage >= 20 && <CheckCircle2 className="h-5 w-5 text-primary" />}
+                </div>
+                <div className="text-4xl font-bold text-primary mb-1">
+                  {exp1Data.percentage.toFixed(1)}%
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Target: ≥20% {exp1Data.percentage >= 20 ? "✓ Met" : "Not met"}
+                </div>
+                
+                {/* Progress bar */}
+                <div className="mt-3 h-2 bg-secondary rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-gradient-primary transition-all duration-500"
+                    style={{ width: `${Math.min(exp1Data.percentage, 100)}%` }}
+                  />
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-border text-sm">
+                <div className="text-muted-foreground mb-2">Hypothesis</div>
+                <p className="text-sm">At least 20% will share ≥1 RPI (cost, condition, wait time)</p>
               </div>
             </div>
           </Card>
 
-          <Card className="p-6">
-            <h3 className="text-xl font-bold mb-4">Exp 2: Verification UX</h3>
-            <div className="space-y-3">
-              <div><span className="text-muted-foreground">Total Started:</span> <span className="font-bold">{exp2Data.total}</span></div>
-              <div><span className="text-muted-foreground">Completed:</span> <span className="font-bold">{exp2Data.completed}</span></div>
-              <div className="pt-3 border-t">
+          {/* Experiment 2 */}
+          <Card className="p-6 border-border">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold">Exp 2: Verification UX</h3>
+              <TrendingUp className="h-5 w-5 text-primary" />
+            </div>
+            
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Total Started</span>
+                <span className="text-2xl font-bold">{exp2Data.total}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Within 2min</span>
+                <span className="text-2xl font-bold">{exp2Data.completed}</span>
+              </div>
+
+              <div className="pt-4 border-t border-border">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-muted-foreground">Completion Rate</span>
+                  {exp2Data.total > 0 && (exp2Data.completed / exp2Data.total) * 100 >= 70 && (
+                    <CheckCircle2 className="h-5 w-5 text-primary" />
+                  )}
+                </div>
+                <div className="text-4xl font-bold text-primary mb-1">
+                  {exp2Data.total ? ((exp2Data.completed / exp2Data.total) * 100).toFixed(1) : 0}%
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Target: ≥70% {exp2Data.total > 0 && (exp2Data.completed / exp2Data.total) * 100 >= 70 ? "✓ Met" : "Not met"}
+                </div>
+                
+                {/* Progress bar */}
+                <div className="mt-3 h-2 bg-secondary rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-gradient-primary transition-all duration-500"
+                    style={{ width: `${exp2Data.total ? Math.min((exp2Data.completed / exp2Data.total) * 100, 100) : 0}%` }}
+                  />
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-border">
                 <div className="text-sm text-muted-foreground mb-1">Avg Duration</div>
-                <div className="text-3xl font-bold text-primary">{exp2Data.avgDuration.toFixed(0)}s</div>
+                <div className="text-2xl font-bold">{exp2Data.avgDuration.toFixed(1)}s</div>
+              </div>
+
+              <div className="pt-4 border-t border-border text-sm">
+                <div className="text-muted-foreground mb-2">Hypothesis</div>
+                <p className="text-sm">70% complete verification flow within 2 minutes</p>
               </div>
             </div>
           </Card>
 
-          <Card className="p-6">
-            <h3 className="text-xl font-bold mb-4">Exp 3: Contribution</h3>
-            <div className="space-y-3">
-              <div><span className="text-muted-foreground">Total Prompted:</span> <span className="font-bold">{exp3Data.total}</span></div>
-              <div><span className="text-muted-foreground">Contributed:</span> <span className="font-bold">{exp3Data.yesCount}</span></div>
-              <div className="pt-3 border-t">
-                <div className="text-sm text-muted-foreground mb-1">Conversion Rate</div>
-                <div className="text-3xl font-bold text-primary">
+          {/* Experiment 3 */}
+          <Card className="p-6 border-border">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold">Exp 3: Contribution</h3>
+              <CheckCircle2 className="h-5 w-5 text-primary" />
+            </div>
+            
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Total Prompted</span>
+                <span className="text-2xl font-bold">{exp3Data.total}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Contributed</span>
+                <span className="text-2xl font-bold">{exp3Data.yesCount}</span>
+              </div>
+
+              <div className="pt-4 border-t border-border">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-muted-foreground">Conversion Rate</span>
+                </div>
+                <div className="text-4xl font-bold text-primary mb-1">
                   {exp3Data.total ? ((exp3Data.yesCount / exp3Data.total) * 100).toFixed(1) : 0}%
                 </div>
+                <div className="text-xs text-muted-foreground">
+                  {exp3Data.yesCount} of {exp3Data.total} contributed
+                </div>
+                
+                {/* Progress bar */}
+                <div className="mt-3 h-2 bg-secondary rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-gradient-primary transition-all duration-500"
+                    style={{ width: `${exp3Data.total ? Math.min((exp3Data.yesCount / exp3Data.total) * 100, 100) : 0}%` }}
+                  />
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-border">
+                <div className="text-sm text-muted-foreground mb-1">After Incentive</div>
+                <div className="text-2xl font-bold">{exp3Data.incentiveCount}</div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  Converted after seeing unlock benefit
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-border text-sm">
+                <div className="text-muted-foreground mb-2">Hypothesis</div>
+                <p className="text-sm">Meaningful % contribute, especially with incentive</p>
               </div>
             </div>
           </Card>

@@ -11,6 +11,8 @@ import ContributeReview from "./pages/ContributeReview";
 import ContributeSuccess from "./pages/ContributeSuccess";
 import Experiments from "./pages/Experiments";
 import ExperimentAnonymousForm from "./pages/ExperimentAnonymousForm";
+import ExperimentVerificationUX from "./pages/ExperimentVerificationUX";
+import ExperimentContributionWillingness from "./pages/ExperimentContributionWillingness";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
@@ -31,6 +33,8 @@ const App = () => (
           <Route path="/contribute/success" element={<ContributeSuccess />} />
           <Route path="/experiments" element={<Experiments />} />
           <Route path="/experiments/anonymous-form" element={<ExperimentAnonymousForm />} />
+          <Route path="/experiments/verification-ux" element={<ExperimentVerificationUX />} />
+          <Route path="/experiments/contribution-willingness" element={<ExperimentContributionWillingness />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
