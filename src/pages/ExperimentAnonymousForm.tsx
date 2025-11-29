@@ -1,0 +1,106 @@
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Shield, CheckCircle2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
+export default function ExperimentAnonymousForm() {
+  const { toast } = useToast();
+  const [shareCost, setShareCost] = useState(false);
+  const [shareCondition, setShareCondition] = useState(false);
+  const [shareWaitTime, setShareWaitTime] = useState(false);
+  const [costValue, setCostValue] = useState("");
+  const [conditionValue, setConditionValue] = useState("");
+  const [waitTimeValue, setWaitTimeValue] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmit = async () => {
+    const sessionId = crypto.randomUUID();
+    const rpiCount = (shareCost ? 1 : 0) + (shareCondition ? 1 : 0) + (shareWaitTime ? 1 : 0);
+
+    await supabase.from("experiment_sessions").insert({
+      id: sessionId,
+      experiment_id: "exp1_anonymous",
+      user_session_id: `anon_${Date.now()}`,
+      status: "completed",
+      completed_at: new Date().toISOString(),
+    });
+
+    await supabase.from("exp1_responses").insert({
+      session_id: sessionId,
+      shared_cost: shareCost,
+      shared_condition: shareCondition,
+      shared_wait_time: shareWaitTime,
+      cost_value: shareCost ? costValue : null,
+      condition_value: shareCondition ? conditionValue : null,
+      wait_time_value: shareWaitTime ? waitTimeValue : null,
+      rpi_count: rpiCount,
+    });
+
+    setSubmitted(true);
+    toast({ title: "Response Submitted", description: "Thank you for participating!" });
+  };
+
+  if (submitted) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="max-w-md p-8 text-center">
+          <CheckCircle2 className="h-16 w-16 text-primary mx-auto mb-4" />
+          <h2 className="text-2xl font-bold mb-2">Thank You!</h2>
+          <p className="text-muted-foreground mb-6">Your response has been recorded.</p>
+          <Link to="/experiments"><Button>Back to Experiments</Button></Link>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <nav className="border-b border-border bg-card/50 backdrop-blur-sm">
+        <div className="container mx-auto px-4 py-4">
+          <Link to="/" className="flex items-center gap-2">
+            <Shield className="h-6 w-6 text-primary" />
+            <span className="text-xl font-bold">HealthReview</span>
+          </Link>
+        </div>
+      </nav>
+
+      <div className="container mx-auto px-4 py-12 max-w-2xl">
+        <h1 className="text-3xl font-bold mb-4">Experiment 1: Anonymous Form</h1>
+        <Card className="p-8">
+          <div className="space-y-6">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <input type="checkbox" checked={shareCost} onChange={(e) => setShareCost(e.target.checked)} />
+                <Label>I'm willing to share cost information</Label>
+              </div>
+              {shareCost && <Input placeholder="e.g., $150" value={costValue} onChange={(e) => setCostValue(e.target.value)} />}
+            </div>
+
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <input type="checkbox" checked={shareCondition} onChange={(e) => setShareCondition(e.target.checked)} />
+                <Label>I'm willing to share my condition</Label>
+              </div>
+              {shareCondition && <Input placeholder="e.g., Annual checkup" value={conditionValue} onChange={(e) => setConditionValue(e.target.value)} />}
+            </div>
+
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <input type="checkbox" checked={shareWaitTime} onChange={(e) => setShareWaitTime(e.target.checked)} />
+                <Label>I'm willing to share wait time</Label>
+              </div>
+              {shareWaitTime && <Input placeholder="e.g., 20 minutes" value={waitTimeValue} onChange={(e) => setWaitTimeValue(e.target.value)} />}
+            </div>
+
+            <Button onClick={handleSubmit} className="w-full">Submit Response</Button>
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+}
