@@ -4,24 +4,30 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Shield, TrendingUp, Users, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Admin() {
   const [exp1Data, setExp1Data] = useState({ total: 0, withRPI: 0, percentage: 0 });
   const [exp2Data, setExp2Data] = useState({ total: 0, completed: 0, avgDuration: 0 });
   const [exp3Data, setExp3Data] = useState({ total: 0, yesCount: 0, incentiveCount: 0 });
+  const [exp1Responses, setExp1Responses] = useState<any[]>([]);
+  const [exp2Responses, setExp2Responses] = useState<any[]>([]);
+  const [exp3Responses, setExp3Responses] = useState<any[]>([]);
 
   useEffect(() => {
     fetchAnalytics();
   }, []);
 
   const fetchAnalytics = async () => {
-    const { data: exp1 } = await supabase.from("exp1_responses").select("*");
-    const { data: exp2 } = await supabase.from("exp2_verification_flow").select("*");
-    const { data: exp3 } = await supabase.from("exp3_contribution").select("*");
+    const { data: exp1 } = await supabase.from("exp1_responses").select("*").order("submitted_at", { ascending: false });
+    const { data: exp2 } = await supabase.from("exp2_verification_flow").select("*").order("submitted_at", { ascending: false });
+    const { data: exp3 } = await supabase.from("exp3_contribution").select("*").order("submitted_at", { ascending: false });
 
     if (exp1) {
       const withRPI = exp1.filter((r) => r.rpi_count > 0).length;
       setExp1Data({ total: exp1.length, withRPI, percentage: exp1.length ? (withRPI / exp1.length) * 100 : 0 });
+      setExp1Responses(exp1);
     }
 
     if (exp2) {
@@ -35,6 +41,7 @@ export default function Admin() {
         completed: completedWithinTarget, 
         avgDuration 
       });
+      setExp2Responses(exp2);
     }
 
     if (exp3) {
@@ -46,6 +53,7 @@ export default function Admin() {
         yesCount: totalYes, 
         incentiveCount: yesAfterIncentive 
       });
+      setExp3Responses(exp3);
     }
   };
 
@@ -72,7 +80,16 @@ export default function Admin() {
           </Button>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-6">
+        <Tabs defaultValue="summary" className="w-full">
+          <TabsList className="mb-6">
+            <TabsTrigger value="summary">Summary</TabsTrigger>
+            <TabsTrigger value="exp1">Exp 1 Responses</TabsTrigger>
+            <TabsTrigger value="exp2">Exp 2 Responses</TabsTrigger>
+            <TabsTrigger value="exp3">Exp 3 Responses</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="summary">
+            <div className="grid lg:grid-cols-3 gap-6">
           {/* Experiment 1 */}
           <Card className="p-6 border-border">
             <div className="flex items-center justify-between mb-4">
@@ -221,7 +238,123 @@ export default function Admin() {
               </div>
             </div>
           </Card>
-        </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="exp1">
+            <Card className="p-6">
+              <h2 className="text-2xl font-bold mb-4">Experiment 1: Individual Responses</h2>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Time</TableHead>
+                      <TableHead>Duration</TableHead>
+                      <TableHead>RPI Count</TableHead>
+                      <TableHead>Cost</TableHead>
+                      <TableHead>Condition</TableHead>
+                      <TableHead>Wait Time</TableHead>
+                      <TableHead>Appt Type</TableHead>
+                      <TableHead>Insurance</TableHead>
+                      <TableHead>Accessibility</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {exp1Responses.map((resp) => (
+                      <TableRow key={resp.id}>
+                        <TableCell className="text-xs">
+                          {resp.submitted_at ? new Date(resp.submitted_at).toLocaleString() : "N/A"}
+                        </TableCell>
+                        <TableCell>{resp.session_duration_seconds}s</TableCell>
+                        <TableCell className="font-bold">{resp.rpi_count}</TableCell>
+                        <TableCell>{resp.shared_cost ? "✓" : "✗"}</TableCell>
+                        <TableCell>{resp.shared_condition ? "✓" : "✗"}</TableCell>
+                        <TableCell>{resp.shared_wait_time ? "✓" : "✗"}</TableCell>
+                        <TableCell>{resp.share_appointment_type ? "✓" : "✗"}</TableCell>
+                        <TableCell>{resp.share_insurance_accepted ? "✓" : "✗"}</TableCell>
+                        <TableCell>{resp.share_office_accessibility ? "✓" : "✗"}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="exp2">
+            <Card className="p-6">
+              <h2 className="text-2xl font-bold mb-4">Experiment 2: Individual Responses</h2>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Time</TableHead>
+                      <TableHead>Duration</TableHead>
+                      <TableHead>Completed</TableHead>
+                      <TableHead>Drop Off</TableHead>
+                      <TableHead>ID Upload</TableHead>
+                      <TableHead>Medical Bill</TableHead>
+                      <TableHead>Selfie</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {exp2Responses.map((resp) => (
+                      <TableRow key={resp.id}>
+                        <TableCell className="text-xs">
+                          {resp.submitted_at ? new Date(resp.submitted_at).toLocaleString() : "N/A"}
+                        </TableCell>
+                        <TableCell>{resp.total_duration_seconds}s</TableCell>
+                        <TableCell>{resp.completed_successfully ? "✓" : "✗"}</TableCell>
+                        <TableCell className="text-xs">{resp.drop_off_step || "N/A"}</TableCell>
+                        <TableCell>{resp.uploaded_id_document ? "Yes" : "No"}</TableCell>
+                        <TableCell>{resp.uploaded_medical_bill ? "Yes" : "No"}</TableCell>
+                        <TableCell>{resp.uploaded_selfie ? "Yes" : "No"}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="exp3">
+            <Card className="p-6">
+              <h2 className="text-2xl font-bold mb-4">Experiment 3: Individual Responses</h2>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Time</TableHead>
+                      <TableHead>Duration</TableHead>
+                      <TableHead>Initial</TableHead>
+                      <TableHead>Incentive</TableHead>
+                      <TableHead>Post-Incentive</TableHead>
+                      <TableHead>Final</TableHead>
+                      <TableHead>Review Text</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {exp3Responses.map((resp) => (
+                      <TableRow key={resp.id}>
+                        <TableCell className="text-xs">
+                          {resp.submitted_at ? new Date(resp.submitted_at).toLocaleString() : "N/A"}
+                        </TableCell>
+                        <TableCell>{resp.total_duration_seconds}s</TableCell>
+                        <TableCell>{resp.initial_prompt_response}</TableCell>
+                        <TableCell>{resp.incentive_shown ? "Shown" : "Not shown"}</TableCell>
+                        <TableCell>{resp.post_incentive_response || "N/A"}</TableCell>
+                        <TableCell>{resp.final_contributed ? "✓" : "✗"}</TableCell>
+                        <TableCell className="max-w-xs truncate text-xs">
+                          {resp.review_text || "N/A"}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

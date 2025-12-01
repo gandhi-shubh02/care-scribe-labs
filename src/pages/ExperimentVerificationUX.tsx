@@ -22,6 +22,9 @@ export default function ExperimentVerificationUX() {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadedIdDoc, setUploadedIdDoc] = useState(false);
+  const [uploadedMedicalBill, setUploadedMedicalBill] = useState(false);
+  const [uploadedSelfie, setUploadedSelfie] = useState(false);
 
   // Initialize experiment session
   useEffect(() => {
@@ -48,6 +51,14 @@ export default function ExperimentVerificationUX() {
 
     return () => clearInterval(interval);
   }, [startTime, submitted]);
+
+  const handleFileUpload = (step: 1 | 2 | 3, event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      if (step === 1) setUploadedIdDoc(true);
+      if (step === 2) setUploadedMedicalBill(true);
+      if (step === 3) setUploadedSelfie(true);
+    }
+  };
 
   const handleStep1Complete = () => {
     const now = new Date();
@@ -89,6 +100,9 @@ export default function ExperimentVerificationUX() {
       total_duration_seconds: totalDuration,
       completed_successfully: true,
       drop_off_step: null,
+      uploaded_id_document: uploadedIdDoc,
+      uploaded_medical_bill: uploadedMedicalBill,
+      uploaded_selfie: uploadedSelfie,
     });
 
     setSubmitted(true);
@@ -196,11 +210,19 @@ export default function ExperimentVerificationUX() {
             <p className="text-muted-foreground mb-6">
               Please upload a government-issued ID (driver's license, passport, state ID)
             </p>
-            <div className="border-2 border-dashed border-border rounded-lg p-12 mb-6 text-center hover:border-primary transition-colors cursor-pointer">
-              <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-              <p className="text-sm text-muted-foreground">Click or drag file to upload</p>
+            <label className="border-2 border-dashed border-border rounded-lg p-12 mb-6 text-center hover:border-primary transition-colors cursor-pointer block">
+              <input 
+                type="file" 
+                accept=".jpg,.jpeg,.png,.pdf"
+                className="hidden"
+                onChange={(e) => handleFileUpload(1, e)}
+              />
+              <Upload className={`h-12 w-12 mx-auto mb-3 ${uploadedIdDoc ? 'text-primary' : 'text-muted-foreground'}`} />
+              <p className="text-sm text-muted-foreground">
+                {uploadedIdDoc ? "✓ File selected" : "Click or drag file to upload"}
+              </p>
               <p className="text-xs text-muted-foreground mt-1">Accepted: JPG, PNG, PDF (max 5MB)</p>
-            </div>
+            </label>
             <Button onClick={handleStep1Complete} className="w-full">
               Continue to Next Step
             </Button>
@@ -213,11 +235,19 @@ export default function ExperimentVerificationUX() {
             <p className="text-muted-foreground mb-6">
               Upload your insurance EOB or medical bill. You can redact personal information.
             </p>
-            <div className="border-2 border-dashed border-border rounded-lg p-12 mb-6 text-center hover:border-primary transition-colors cursor-pointer">
-              <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-              <p className="text-sm text-muted-foreground">Click or drag file to upload</p>
+            <label className="border-2 border-dashed border-border rounded-lg p-12 mb-6 text-center hover:border-primary transition-colors cursor-pointer block">
+              <input 
+                type="file" 
+                accept=".jpg,.jpeg,.png,.pdf"
+                className="hidden"
+                onChange={(e) => handleFileUpload(2, e)}
+              />
+              <Upload className={`h-12 w-12 mx-auto mb-3 ${uploadedMedicalBill ? 'text-primary' : 'text-muted-foreground'}`} />
+              <p className="text-sm text-muted-foreground">
+                {uploadedMedicalBill ? "✓ File selected" : "Click or drag file to upload"}
+              </p>
               <p className="text-xs text-muted-foreground mt-1">Accepted: JPG, PNG, PDF (max 10MB)</p>
-            </div>
+            </label>
             <Button onClick={handleStep2Complete} className="w-full" disabled={uploading}>
               {uploading ? "Uploading..." : "Continue to Next Step"}
             </Button>
@@ -230,11 +260,20 @@ export default function ExperimentVerificationUX() {
             <p className="text-muted-foreground mb-6">
               Take a selfie holding your ID next to your face for verification.
             </p>
-            <div className="border-2 border-border rounded-lg p-12 mb-6 bg-muted/30 text-center">
-              <div className="h-48 w-48 mx-auto bg-background rounded-lg flex items-center justify-center border-2 border-dashed border-border">
-                <p className="text-sm text-muted-foreground">Camera Preview</p>
+            <label className="border-2 border-border rounded-lg p-12 mb-6 bg-muted/30 text-center block cursor-pointer hover:border-primary transition-colors">
+              <input 
+                type="file" 
+                accept="image/*"
+                capture="user"
+                className="hidden"
+                onChange={(e) => handleFileUpload(3, e)}
+              />
+              <div className={`h-48 w-48 mx-auto bg-background rounded-lg flex items-center justify-center border-2 border-dashed ${uploadedSelfie ? 'border-primary' : 'border-border'}`}>
+                <p className="text-sm text-muted-foreground">
+                  {uploadedSelfie ? "✓ Photo taken" : "Tap to take photo"}
+                </p>
               </div>
-            </div>
+            </label>
             <Button onClick={handleStep3Complete} className="w-full bg-gradient-primary">
               Complete Verification
             </Button>
