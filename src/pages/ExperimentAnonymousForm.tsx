@@ -16,6 +16,12 @@ export default function ExperimentAnonymousForm() {
   const [costValue, setCostValue] = useState("");
   const [conditionValue, setConditionValue] = useState("");
   const [waitTimeValue, setWaitTimeValue] = useState("");
+  const [shareAppointmentType, setShareAppointmentType] = useState(false);
+  const [appointmentTypeValue, setAppointmentTypeValue] = useState("");
+  const [shareInsuranceAccepted, setShareInsuranceAccepted] = useState(false);
+  const [insuranceAcceptedValue, setInsuranceAcceptedValue] = useState("");
+  const [shareOfficeAccessibility, setShareOfficeAccessibility] = useState(false);
+  const [officeAccessibilityValue, setOfficeAccessibilityValue] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [startTime] = useState<Date>(new Date());
 
@@ -28,7 +34,8 @@ export default function ExperimentAnonymousForm() {
     const sessionId = crypto.randomUUID();
     const endTime = new Date();
     const durationSeconds = Math.floor((endTime.getTime() - startTime.getTime()) / 1000);
-    const rpiCount = (shareCost ? 1 : 0) + (shareCondition ? 1 : 0) + (shareWaitTime ? 1 : 0);
+    const rpiCount = (shareCost ? 1 : 0) + (shareCondition ? 1 : 0) + (shareWaitTime ? 1 : 0) + 
+                     (shareAppointmentType ? 1 : 0) + (shareInsuranceAccepted ? 1 : 0) + (shareOfficeAccessibility ? 1 : 0);
 
     await supabase.from("experiment_sessions").insert({
       id: sessionId,
@@ -46,6 +53,12 @@ export default function ExperimentAnonymousForm() {
       cost_value: shareCost ? costValue : null,
       condition_value: shareCondition ? conditionValue : null,
       wait_time_value: shareWaitTime ? waitTimeValue : null,
+      share_appointment_type: shareAppointmentType,
+      appointment_type_value: shareAppointmentType ? appointmentTypeValue : null,
+      share_insurance_accepted: shareInsuranceAccepted,
+      insurance_accepted_value: shareInsuranceAccepted ? insuranceAcceptedValue : null,
+      share_office_accessibility: shareOfficeAccessibility,
+      office_accessibility_value: shareOfficeAccessibility ? officeAccessibilityValue : null,
       rpi_count: rpiCount,
       session_start_at: startTime.toISOString(),
       session_duration_seconds: durationSeconds,
@@ -106,6 +119,30 @@ export default function ExperimentAnonymousForm() {
                 <Label>I'm willing to share wait time</Label>
               </div>
               {shareWaitTime && <Input placeholder="e.g., 20 minutes" value={waitTimeValue} onChange={(e) => setWaitTimeValue(e.target.value)} />}
+            </div>
+
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <input type="checkbox" checked={shareAppointmentType} onChange={(e) => setShareAppointmentType(e.target.checked)} />
+                <Label>I'm willing to share appointment type</Label>
+              </div>
+              {shareAppointmentType && <Input placeholder="e.g., Initial consultation" value={appointmentTypeValue} onChange={(e) => setAppointmentTypeValue(e.target.value)} />}
+            </div>
+
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <input type="checkbox" checked={shareInsuranceAccepted} onChange={(e) => setShareInsuranceAccepted(e.target.checked)} />
+                <Label>I'm willing to share if my insurance was accepted</Label>
+              </div>
+              {shareInsuranceAccepted && <Input placeholder="e.g., Blue Cross accepted" value={insuranceAcceptedValue} onChange={(e) => setInsuranceAcceptedValue(e.target.value)} />}
+            </div>
+
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <input type="checkbox" checked={shareOfficeAccessibility} onChange={(e) => setShareOfficeAccessibility(e.target.checked)} />
+                <Label>I'm willing to share office accessibility info</Label>
+              </div>
+              {shareOfficeAccessibility && <Input placeholder="e.g., Wheelchair accessible, elevator available" value={officeAccessibilityValue} onChange={(e) => setOfficeAccessibilityValue(e.target.value)} />}
             </div>
 
             <Button onClick={handleSubmit} className="w-full">Submit Response</Button>

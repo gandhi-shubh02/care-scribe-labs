@@ -16,13 +16,19 @@ export type Database = {
     Tables: {
       exp1_responses: {
         Row: {
+          appointment_type_value: string | null
           condition_value: string | null
           cost_value: string | null
           id: string
+          insurance_accepted_value: string | null
+          office_accessibility_value: string | null
           rpi_count: number | null
           session_duration_seconds: number | null
           session_id: string
           session_start_at: string | null
+          share_appointment_type: boolean | null
+          share_insurance_accepted: boolean | null
+          share_office_accessibility: boolean | null
           shared_condition: boolean | null
           shared_cost: boolean | null
           shared_wait_time: boolean | null
@@ -30,13 +36,19 @@ export type Database = {
           wait_time_value: string | null
         }
         Insert: {
+          appointment_type_value?: string | null
           condition_value?: string | null
           cost_value?: string | null
           id?: string
+          insurance_accepted_value?: string | null
+          office_accessibility_value?: string | null
           rpi_count?: number | null
           session_duration_seconds?: number | null
           session_id: string
           session_start_at?: string | null
+          share_appointment_type?: boolean | null
+          share_insurance_accepted?: boolean | null
+          share_office_accessibility?: boolean | null
           shared_condition?: boolean | null
           shared_cost?: boolean | null
           shared_wait_time?: boolean | null
@@ -44,13 +56,19 @@ export type Database = {
           wait_time_value?: string | null
         }
         Update: {
+          appointment_type_value?: string | null
           condition_value?: string | null
           cost_value?: string | null
           id?: string
+          insurance_accepted_value?: string | null
+          office_accessibility_value?: string | null
           rpi_count?: number | null
           session_duration_seconds?: number | null
           session_id?: string
           session_start_at?: string | null
+          share_appointment_type?: boolean | null
+          share_insurance_accepted?: boolean | null
+          share_office_accessibility?: boolean | null
           shared_condition?: boolean | null
           shared_cost?: boolean | null
           shared_wait_time?: boolean | null
@@ -81,6 +99,9 @@ export type Database = {
           step_3_start: string | null
           submitted_at: string | null
           total_duration_seconds: number | null
+          uploaded_id_document: boolean | null
+          uploaded_medical_bill: boolean | null
+          uploaded_selfie: boolean | null
         }
         Insert: {
           completed_successfully?: boolean | null
@@ -95,6 +116,9 @@ export type Database = {
           step_3_start?: string | null
           submitted_at?: string | null
           total_duration_seconds?: number | null
+          uploaded_id_document?: boolean | null
+          uploaded_medical_bill?: boolean | null
+          uploaded_selfie?: boolean | null
         }
         Update: {
           completed_successfully?: boolean | null
@@ -109,6 +133,9 @@ export type Database = {
           step_3_start?: string | null
           submitted_at?: string | null
           total_duration_seconds?: number | null
+          uploaded_id_document?: boolean | null
+          uploaded_medical_bill?: boolean | null
+          uploaded_selfie?: boolean | null
         }
         Relationships: [
           {
@@ -132,6 +159,7 @@ export type Database = {
           post_incentive_response:
             | Database["public"]["Enums"]["contribution_response"]
             | null
+          review_text: string | null
           session_id: string
           submitted_at: string | null
           total_duration_seconds: number | null
@@ -147,6 +175,7 @@ export type Database = {
           post_incentive_response?:
             | Database["public"]["Enums"]["contribution_response"]
             | null
+          review_text?: string | null
           session_id: string
           submitted_at?: string | null
           total_duration_seconds?: number | null
@@ -162,6 +191,7 @@ export type Database = {
           post_incentive_response?:
             | Database["public"]["Enums"]["contribution_response"]
             | null
+          review_text?: string | null
           session_id?: string
           submitted_at?: string | null
           total_duration_seconds?: number | null

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import { Shield, CheckCircle2, Gift, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -16,6 +17,7 @@ export default function ExperimentContributionWillingness() {
   const [showedIncentive, setShowedIncentive] = useState(false);
   const [postIncentiveResponse, setPostIncentiveResponse] = useState<"yes" | "no" | null>(null);
   const [finalContributed, setFinalContributed] = useState(false);
+  const [reviewText, setReviewText] = useState("");
   
   // Time tracking
   const [initialPromptTime] = useState<Date>(new Date());
@@ -34,30 +36,30 @@ export default function ExperimentContributionWillingness() {
 
   const handleInitialResponse = (response: "yes" | "no") => {
     setInitialResponse(response);
-    const decisionTime = new Date();
-    setFinalDecisionTime(decisionTime);
 
-    if (response === "yes") {
-      // User said yes immediately
-      setFinalContributed(true);
-      setStage("final");
-      submitData(response, false, null, true, decisionTime);
-    } else {
+    if (response === "no") {
       // User said no, show incentive
       setShowedIncentive(true);
       const incentiveTime = new Date();
       setIncentiveShownTime(incentiveTime);
       setStage("incentive");
+    } else {
+      // User said yes, collect review
+      setFinalContributed(true);
+      setStage("final");
     }
   };
 
   const handlePostIncentiveResponse = (response: "yes" | "no") => {
     setPostIncentiveResponse(response);
     setFinalContributed(response === "yes");
+    setStage("final");
+  };
+
+  const handleReviewSubmit = () => {
     const decisionTime = new Date();
     setFinalDecisionTime(decisionTime);
-    setStage("final");
-    submitData(initialResponse!, true, response, response === "yes", decisionTime);
+    submitData(initialResponse!, showedIncentive, postIncentiveResponse, finalContributed, decisionTime);
   };
 
   const submitData = async (
@@ -80,6 +82,7 @@ export default function ExperimentContributionWillingness() {
       incentive_shown: incentiveShown,
       post_incentive_response: postIncentive,
       final_contributed: contributed,
+      review_text: contributed ? reviewText : null,
       initial_prompt_at: initialPromptTime.toISOString(),
       incentive_shown_at: incentiveShownTime?.toISOString(),
       final_decision_at: decisionTime.toISOString(),
@@ -205,21 +208,37 @@ export default function ExperimentContributionWillingness() {
           </Card>
         )}
 
-        {/* Final Thank You */}
+        {/* Final - Review Submission or Thank You */}
         {stage === "final" && (
           <Card className="p-12 text-center animate-in fade-in duration-500">
             {finalContributed ? (
               <>
                 <CheckCircle2 className="h-16 w-16 text-primary mx-auto mb-6" />
-                <h2 className="text-2xl font-bold mb-3">Thank You for Contributing!</h2>
-                <p className="text-muted-foreground mb-6">
-                  Your review helps build a more transparent healthcare system.
+                <h2 className="text-2xl font-bold mb-3 text-left">Share Your Experience</h2>
+                <p className="text-muted-foreground mb-6 text-left">
+                  Tell us about your visit with Dr. Sarah Chen.
                 </p>
+                
+                <Textarea 
+                  placeholder="Share details about your experience, wait time, staff helpfulness, or anything that would help other patients..."
+                  value={reviewText}
+                  onChange={(e) => setReviewText(e.target.value)}
+                  className="min-h-[150px] mb-6"
+                />
+                
                 {showedIncentive && (
-                  <div className="bg-gradient-hero border border-border rounded-lg p-4 mb-4">
-                    <p className="text-sm font-semibold">✓ Provider insights unlocked</p>
+                  <div className="bg-gradient-hero border border-border rounded-lg p-4 mb-6">
+                    <p className="text-sm font-semibold">✓ Provider insights will be unlocked after submission</p>
                   </div>
                 )}
+                
+                <Button 
+                  onClick={handleReviewSubmit} 
+                  className="w-full bg-gradient-primary"
+                  disabled={!reviewText.trim()}
+                >
+                  Submit Review
+                </Button>
               </>
             ) : (
               <>
@@ -230,6 +249,9 @@ export default function ExperimentContributionWillingness() {
                 <p className="text-muted-foreground mb-6">
                   Thanks for your time. You can always leave a review later.
                 </p>
+                <Button onClick={handleReviewSubmit} variant="outline">
+                  Continue
+                </Button>
               </>
             )}
           </Card>
