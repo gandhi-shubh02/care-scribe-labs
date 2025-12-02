@@ -32,12 +32,17 @@ export default function ExperimentVerificationUX() {
     setStartTime(now);
     setStep1Start(now);
 
-    supabase.from("experiment_sessions").insert({
-      id: sessionId,
-      experiment_id: "exp2_verification",
-      user_session_id: `ux_${Date.now()}`,
-      status: "started",
-    });
+    const initSession = async () => {
+      const { error } = await supabase.from("experiment_sessions").insert({
+        id: sessionId,
+        experiment_id: "exp2_verification",
+        user_session_id: `ux_${Date.now()}`,
+        status: "started",
+      });
+      if (error) console.error("Failed to create exp2 session:", error);
+      else console.log("Exp2 session created:", sessionId);
+    };
+    initSession();
   }, [sessionId]);
 
   // Timer
@@ -84,12 +89,13 @@ export default function ExperimentVerificationUX() {
 
     const totalDuration = Math.floor((now.getTime() - startTime!.getTime()) / 1000);
 
-    await supabase.from("experiment_sessions").update({
+    const { error: sessionError } = await supabase.from("experiment_sessions").update({
       status: "completed",
       completed_at: now.toISOString(),
     }).eq("id", sessionId);
+    if (sessionError) console.error("Failed to update exp2 session:", sessionError);
 
-    await supabase.from("exp2_verification_flow").insert({
+    const { error: flowError } = await supabase.from("exp2_verification_flow").insert({
       session_id: sessionId,
       step_1_start: step1Start?.toISOString(),
       step_1_complete: step1Complete?.toISOString(),
@@ -104,6 +110,8 @@ export default function ExperimentVerificationUX() {
       uploaded_medical_bill: uploadedMedicalBill,
       uploaded_selfie: uploadedSelfie,
     });
+    if (flowError) console.error("Failed to insert exp2 flow:", flowError);
+    else console.log("Exp2 flow recorded successfully");
 
     setSubmitted(true);
     toast({
