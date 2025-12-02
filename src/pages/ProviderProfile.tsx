@@ -172,7 +172,7 @@ export default function ProviderProfile() {
               </Card>
             )}
             
-            <Link to={`/contribute/review?provider=${provider.id}`}>
+            <Link to={`/contribute/verify?provider=${provider.id}`}>
               <Button className="w-full bg-gradient-primary hover:opacity-90">
                 Add My Review
               </Button>
@@ -217,7 +217,7 @@ export default function ProviderProfile() {
         {reviews.length === 0 ? (
           <Card className="p-12 text-center border-border">
             <p className="text-muted-foreground mb-4">No reviews yet. Be the first to review this provider!</p>
-            <Link to={`/contribute/review?provider=${provider.id}`}>
+            <Link to={`/contribute/verify?provider=${provider.id}`}>
               <Button>Leave a Review</Button>
             </Link>
           </Card>
