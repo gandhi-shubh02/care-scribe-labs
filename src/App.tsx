@@ -10,6 +10,7 @@ import ProviderProfile from "./pages/ProviderProfile";
 import ContributeVerify from "./pages/ContributeVerify";
 import ContributeReview from "./pages/ContributeReview";
 import ContributeSuccess from "./pages/ContributeSuccess";
+import VerificationFailed from "./pages/VerificationFailed";
 import Experiments from "./pages/Experiments";
 import ExperimentAnonymousForm from "./pages/ExperimentAnonymousForm";
 import ExperimentVerificationUX from "./pages/ExperimentVerificationUX";
@@ -34,6 +35,7 @@ const App = () => (
             <Route path="/contribute/verify" element={<ContributeVerify />} />
             <Route path="/contribute/review" element={<ContributeReview />} />
             <Route path="/contribute/success" element={<ContributeSuccess />} />
+            <Route path="/contribute/verification-failed" element={<VerificationFailed />} />
             <Route path="/experiments" element={<Experiments />} />
             <Route path="/experiments/anonymous-form" element={<ExperimentAnonymousForm />} />
             <Route path="/experiments/verification-ux" element={<ExperimentVerificationUX />} />
