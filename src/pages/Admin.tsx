@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Shield, TrendingUp, Users, CheckCircle2, Download } from "lucide-react";
+import { Shield, TrendingUp, Users, CheckCircle2, Download, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/hooks/useAuth";
 
 const downloadCSV = (data: any[], filename: string) => {
   if (data.length === 0) return;
@@ -32,6 +33,7 @@ const downloadCSV = (data: any[], filename: string) => {
 };
 
 export default function Admin() {
+  const { user, isAdmin, loading, signOut } = useAuth();
   const [exp1Data, setExp1Data] = useState({ total: 0, withRPI: 0, percentage: 0 });
   const [exp2Data, setExp2Data] = useState({ total: 0, completed: 0, avgDuration: 0 });
   const [exp3Data, setExp3Data] = useState({ total: 0, yesCount: 0, incentiveCount: 0 });
@@ -40,8 +42,51 @@ export default function Admin() {
   const [exp3Responses, setExp3Responses] = useState<any[]>([]);
 
   useEffect(() => {
-    fetchAnalytics();
-  }, []);
+    if (isAdmin) {
+      fetchAnalytics();
+    }
+  }, [isAdmin]);
+
+  // Redirect to auth if not logged in
+  if (!loading && !user) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  // Show loading while checking auth
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  // Show access denied if not admin
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card className="max-w-md p-8 text-center">
+          <Shield className="h-16 w-16 text-destructive mx-auto mb-4" />
+          <h2 className="text-2xl font-bold mb-2">Access Denied</h2>
+          <p className="text-muted-foreground mb-4">
+            You don't have admin privileges to view this page.
+          </p>
+          <p className="text-sm text-muted-foreground mb-6">
+            Logged in as: {user?.email}
+          </p>
+          <div className="flex gap-2 justify-center">
+            <Link to="/">
+              <Button variant="outline">Go Home</Button>
+            </Link>
+            <Button variant="destructive" onClick={signOut}>
+              <LogOut className="h-4 w-4 mr-2" />
+              Sign Out
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   const fetchAnalytics = async () => {
     const { data: exp1 } = await supabase.from("exp1_responses").select("*").order("submitted_at", { ascending: false });
@@ -90,8 +135,13 @@ export default function Admin() {
             <span className="text-xl font-bold">HealthReview</span>
           </Link>
           <div className="flex items-center gap-4">
+            <span className="text-sm text-muted-foreground">{user?.email}</span>
             <Link to="/providers"><Button variant="ghost">Providers</Button></Link>
             <Link to="/experiments"><Button variant="ghost">Experiments</Button></Link>
+            <Button variant="ghost" size="sm" onClick={signOut}>
+              <LogOut className="h-4 w-4 mr-2" />
+              Sign Out
+            </Button>
           </div>
         </div>
       </nav>
