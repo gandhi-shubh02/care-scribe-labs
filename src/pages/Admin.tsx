@@ -67,7 +67,7 @@ export default function Admin() {
       // Since we can't query auth.users directly, we'll use rpc or the admin will need to provide user_id
       // For now, let's show the user that they need to use the email of someone who has signed up
       
-      const { error } = await supabase.rpc("add_admin_by_email", { admin_email: newAdminEmail.trim() });
+      const { error } = await supabase.rpc("add_admin_by_email" as any, { _email: newAdminEmail.trim() });
       
       if (error) {
         // If RPC doesn't exist, show helpful message
