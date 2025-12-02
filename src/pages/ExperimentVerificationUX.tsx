@@ -21,7 +21,8 @@ export default function ExperimentVerificationUX() {
   const [step3Complete, setStep3Complete] = useState<Date | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [submitted, setSubmitted] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  const [processing, setProcessing] = useState(false);
+  const [processingMessage, setProcessingMessage] = useState("");
   const [uploadedIdDoc, setUploadedIdDoc] = useState(false);
   const [uploadedMedicalBill, setUploadedMedicalBill] = useState(false);
   const [uploadedSelfie, setUploadedSelfie] = useState(false);
@@ -66,58 +67,73 @@ export default function ExperimentVerificationUX() {
   };
 
   const handleStep1Complete = () => {
-    const now = new Date();
-    setStep1Complete(now);
-    setStep2Start(now);
-    setCurrentStep(2);
+    setProcessing(true);
+    setProcessingMessage("Verifying ID document...");
+    setTimeout(() => {
+      const now = new Date();
+      setStep1Complete(now);
+      setStep2Start(now);
+      setCurrentStep(2);
+      setProcessing(false);
+      setProcessingMessage("");
+    }, 2000);
   };
 
   const handleStep2Complete = () => {
-    setUploading(true);
+    setProcessing(true);
+    setProcessingMessage("Processing medical bill...");
     setTimeout(() => {
       const now = new Date();
       setStep2Complete(now);
       setStep3Start(now);
       setCurrentStep(3);
-      setUploading(false);
-    }, 1500);
+      setProcessing(false);
+      setProcessingMessage("");
+    }, 2500);
   };
 
-  const handleStep3Complete = async () => {
-    const now = new Date();
-    setStep3Complete(now);
+  const handleStep3Complete = () => {
+    setProcessing(true);
+    setProcessingMessage("Verifying selfie match...");
+    
+    setTimeout(async () => {
+      const now = new Date();
+      setStep3Complete(now);
 
-    const totalDuration = Math.floor((now.getTime() - startTime!.getTime()) / 1000);
+      const totalDuration = Math.floor((now.getTime() - startTime!.getTime()) / 1000);
 
-    const { error: sessionError } = await supabase.from("experiment_sessions").update({
-      status: "completed",
-      completed_at: now.toISOString(),
-    }).eq("id", sessionId);
-    if (sessionError) console.error("Failed to update exp2 session:", sessionError);
+      const { error: sessionError } = await supabase.from("experiment_sessions").update({
+        status: "completed",
+        completed_at: now.toISOString(),
+      }).eq("id", sessionId);
+      if (sessionError) console.error("Failed to update exp2 session:", sessionError);
 
-    const { error: flowError } = await supabase.from("exp2_verification_flow").insert({
-      session_id: sessionId,
-      step_1_start: step1Start?.toISOString(),
-      step_1_complete: step1Complete?.toISOString(),
-      step_2_start: step2Start?.toISOString(),
-      step_2_complete: step2Complete?.toISOString(),
-      step_3_start: step3Start?.toISOString(),
-      step_3_complete: now.toISOString(),
-      total_duration_seconds: totalDuration,
-      completed_successfully: true,
-      drop_off_step: null,
-      uploaded_id_document: uploadedIdDoc,
-      uploaded_medical_bill: uploadedMedicalBill,
-      uploaded_selfie: uploadedSelfie,
-    });
-    if (flowError) console.error("Failed to insert exp2 flow:", flowError);
-    else console.log("Exp2 flow recorded successfully");
+      const { error: flowError } = await supabase.from("exp2_verification_flow").insert({
+        session_id: sessionId,
+        step_1_start: step1Start?.toISOString(),
+        step_1_complete: step1Complete?.toISOString(),
+        step_2_start: step2Start?.toISOString(),
+        step_2_complete: step2Complete?.toISOString(),
+        step_3_start: step3Start?.toISOString(),
+        step_3_complete: now.toISOString(),
+        total_duration_seconds: totalDuration,
+        completed_successfully: true,
+        drop_off_step: null,
+        uploaded_id_document: uploadedIdDoc,
+        uploaded_medical_bill: uploadedMedicalBill,
+        uploaded_selfie: uploadedSelfie,
+      });
+      if (flowError) console.error("Failed to insert exp2 flow:", flowError);
+      else console.log("Exp2 flow recorded successfully");
 
-    setSubmitted(true);
-    toast({
-      title: "Experiment Complete!",
-      description: `Completed in ${totalDuration} seconds`,
-    });
+      setProcessing(false);
+      setProcessingMessage("");
+      setSubmitted(true);
+      toast({
+        title: "Experiment Complete!",
+        description: `Completed in ${totalDuration} seconds`,
+      });
+    }, 1800);
   };
 
   const handleAbandon = async () => {
@@ -231,8 +247,8 @@ export default function ExperimentVerificationUX() {
               </p>
               <p className="text-xs text-muted-foreground mt-1">Accepted: JPG, PNG, PDF (max 5MB)</p>
             </label>
-            <Button onClick={handleStep1Complete} className="w-full">
-              Continue to Next Step
+            <Button onClick={handleStep1Complete} className="w-full" disabled={processing}>
+              {processing ? processingMessage : "Continue to Next Step"}
             </Button>
           </Card>
         )}
@@ -256,8 +272,8 @@ export default function ExperimentVerificationUX() {
               </p>
               <p className="text-xs text-muted-foreground mt-1">Accepted: JPG, PNG, PDF (max 10MB)</p>
             </label>
-            <Button onClick={handleStep2Complete} className="w-full" disabled={uploading}>
-              {uploading ? "Uploading..." : "Continue to Next Step"}
+            <Button onClick={handleStep2Complete} className="w-full" disabled={processing}>
+              {processing ? processingMessage : "Continue to Next Step"}
             </Button>
           </Card>
         )}
@@ -282,8 +298,8 @@ export default function ExperimentVerificationUX() {
                 </p>
               </div>
             </label>
-            <Button onClick={handleStep3Complete} className="w-full bg-gradient-primary">
-              Complete Verification
+            <Button onClick={handleStep3Complete} className="w-full bg-gradient-primary" disabled={processing}>
+              {processing ? processingMessage : "Complete Verification"}
             </Button>
           </Card>
         )}
