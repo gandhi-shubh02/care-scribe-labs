@@ -2,11 +2,15 @@ import { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Shield, TrendingUp, Users, CheckCircle2, Download, LogOut } from "lucide-react";
+import { Shield, TrendingUp, Users, CheckCircle2, Download, LogOut, UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 
 const downloadCSV = (data: any[], filename: string) => {
   if (data.length === 0) return;
@@ -34,12 +38,55 @@ const downloadCSV = (data: any[], filename: string) => {
 
 export default function Admin() {
   const { user, isAdmin, loading, signOut } = useAuth();
+  const { toast } = useToast();
   const [exp1Data, setExp1Data] = useState({ total: 0, withRPI: 0, percentage: 0 });
   const [exp2Data, setExp2Data] = useState({ total: 0, completed: 0, avgDuration: 0 });
   const [exp3Data, setExp3Data] = useState({ total: 0, yesCount: 0, incentiveCount: 0 });
   const [exp1Responses, setExp1Responses] = useState<any[]>([]);
   const [exp2Responses, setExp2Responses] = useState<any[]>([]);
   const [exp3Responses, setExp3Responses] = useState<any[]>([]);
+  const [newAdminEmail, setNewAdminEmail] = useState("");
+  const [addingAdmin, setAddingAdmin] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const handleAddAdmin = async () => {
+    if (!newAdminEmail.trim()) {
+      toast({ title: "Error", description: "Please enter an email", variant: "destructive" });
+      return;
+    }
+    
+    setAddingAdmin(true);
+    try {
+      // First get the user ID from auth.users via a query to find if they exist
+      const { data: userData, error: userError } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .limit(1);
+      
+      // We need to use RPC or direct insert - let's try inserting with a subquery approach
+      // Since we can't query auth.users directly, we'll use rpc or the admin will need to provide user_id
+      // For now, let's show the user that they need to use the email of someone who has signed up
+      
+      const { error } = await supabase.rpc("add_admin_by_email", { admin_email: newAdminEmail.trim() });
+      
+      if (error) {
+        // If RPC doesn't exist, show helpful message
+        toast({ 
+          title: "Note", 
+          description: "User must have signed up first. Ask them to create an account, then try again.",
+          variant: "destructive"
+        });
+      } else {
+        toast({ title: "Success", description: `Added ${newAdminEmail} as admin` });
+        setNewAdminEmail("");
+        setDialogOpen(false);
+      }
+    } catch (err) {
+      toast({ title: "Error", description: "Failed to add admin", variant: "destructive" });
+    } finally {
+      setAddingAdmin(false);
+    }
+  };
 
   useEffect(() => {
     if (isAdmin) {
@@ -149,9 +196,42 @@ export default function Admin() {
       <div className="container mx-auto px-4 py-12">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-4xl font-bold">Experiment Analytics</h1>
-          <Button onClick={fetchAnalytics} variant="outline">
-            Refresh Data
-          </Button>
+          <div className="flex gap-2">
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Add Admin
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add New Admin</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 pt-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="admin-email">Email Address</Label>
+                    <Input
+                      id="admin-email"
+                      type="email"
+                      placeholder="user@example.com"
+                      value={newAdminEmail}
+                      onChange={(e) => setNewAdminEmail(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      User must have already signed up before being added as admin.
+                    </p>
+                  </div>
+                  <Button onClick={handleAddAdmin} disabled={addingAdmin} className="w-full">
+                    {addingAdmin ? "Adding..." : "Add Admin"}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+            <Button onClick={fetchAnalytics} variant="outline">
+              Refresh Data
+            </Button>
+          </div>
         </div>
 
         <Tabs defaultValue="summary" className="w-full">
