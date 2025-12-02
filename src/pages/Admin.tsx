@@ -2,10 +2,34 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Shield, TrendingUp, Users, CheckCircle2 } from "lucide-react";
+import { Shield, TrendingUp, Users, CheckCircle2, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+const downloadCSV = (data: any[], filename: string) => {
+  if (data.length === 0) return;
+  const headers = Object.keys(data[0]);
+  const csvContent = [
+    headers.join(","),
+    ...data.map(row => 
+      headers.map(header => {
+        const value = row[header];
+        if (value === null || value === undefined) return "";
+        if (typeof value === "string" && (value.includes(",") || value.includes('"') || value.includes("\n"))) {
+          return `"${value.replace(/"/g, '""')}"`;
+        }
+        return value;
+      }).join(",")
+    )
+  ].join("\n");
+  
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `${filename}_${new Date().toISOString().split("T")[0]}.csv`;
+  link.click();
+};
 
 export default function Admin() {
   const [exp1Data, setExp1Data] = useState({ total: 0, withRPI: 0, percentage: 0 });
@@ -243,7 +267,12 @@ export default function Admin() {
 
           <TabsContent value="exp1">
             <Card className="p-6">
-              <h2 className="text-2xl font-bold mb-4">Experiment 1: Individual Responses</h2>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold">Experiment 1: Individual Responses</h2>
+                <Button variant="outline" size="sm" onClick={() => downloadCSV(exp1Responses, "exp1_anonymous_form")}>
+                  <Download className="h-4 w-4 mr-2" />Export CSV
+                </Button>
+              </div>
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
@@ -283,7 +312,12 @@ export default function Admin() {
 
           <TabsContent value="exp2">
             <Card className="p-6">
-              <h2 className="text-2xl font-bold mb-4">Experiment 2: Individual Responses</h2>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold">Experiment 2: Individual Responses</h2>
+                <Button variant="outline" size="sm" onClick={() => downloadCSV(exp2Responses, "exp2_verification_ux")}>
+                  <Download className="h-4 w-4 mr-2" />Export CSV
+                </Button>
+              </div>
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
@@ -319,7 +353,12 @@ export default function Admin() {
 
           <TabsContent value="exp3">
             <Card className="p-6">
-              <h2 className="text-2xl font-bold mb-4">Experiment 3: Individual Responses</h2>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold">Experiment 3: Individual Responses</h2>
+                <Button variant="outline" size="sm" onClick={() => downloadCSV(exp3Responses, "exp3_contribution")}>
+                  <Download className="h-4 w-4 mr-2" />Export CSV
+                </Button>
+              </div>
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
