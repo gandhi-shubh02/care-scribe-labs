@@ -25,14 +25,18 @@ export default function ExperimentContributionWillingness() {
   const [finalDecisionTime, setFinalDecisionTime] = useState<Date | null>(null);
 
   useEffect(() => {
-    supabase.from("experiment_sessions").insert({
-      id: sessionId,
-      experiment_id: "exp3_contribution",
-      user_session_id: `contrib_${Date.now()}`,
-      status: "started",
-    });
-    console.log("Experiment 3 started at:", initialPromptTime.toISOString());
-  }, [sessionId, initialPromptTime]);
+    const initSession = async () => {
+      const { error } = await supabase.from("experiment_sessions").insert({
+        id: sessionId,
+        experiment_id: "exp3_contribution",
+        user_session_id: `contrib_${Date.now()}`,
+        status: "started",
+      });
+      if (error) console.error("Failed to create exp3 session:", error);
+      else console.log("Exp3 session created:", sessionId);
+    };
+    initSession();
+  }, [sessionId]);
 
   const handleInitialResponse = (response: "yes" | "no") => {
     setInitialResponse(response);
@@ -71,12 +75,13 @@ export default function ExperimentContributionWillingness() {
   ) => {
     const totalDurationSeconds = Math.floor((decisionTime.getTime() - initialPromptTime.getTime()) / 1000);
     
-    await supabase.from("experiment_sessions").update({
+    const { error: sessionError } = await supabase.from("experiment_sessions").update({
       status: "completed",
       completed_at: decisionTime.toISOString(),
     }).eq("id", sessionId);
+    if (sessionError) console.error("Failed to update exp3 session:", sessionError);
 
-    await supabase.from("exp3_contribution").insert({
+    const { error: contribError } = await supabase.from("exp3_contribution").insert({
       session_id: sessionId,
       initial_prompt_response: initial,
       incentive_shown: incentiveShown,
@@ -88,10 +93,11 @@ export default function ExperimentContributionWillingness() {
       final_decision_at: decisionTime.toISOString(),
       total_duration_seconds: totalDurationSeconds,
     });
+    if (contribError) console.error("Failed to insert exp3 contribution:", contribError);
+    else console.log("Exp3 contribution recorded successfully");
 
-    console.log("Experiment 3 completed in", totalDurationSeconds, "seconds");
     toast({ title: "Response Recorded", description: "Thank you for participating!" });
-    setTimeout(() => setStage("complete"), 2000);
+    setStage("complete");
   };
 
   if (stage === "complete") {
