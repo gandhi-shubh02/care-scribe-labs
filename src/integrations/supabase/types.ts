@@ -21,6 +21,7 @@ export type Database = {
           cost_value: string | null
           id: string
           insurance_accepted_value: string | null
+          max_time_willing_minutes: number | null
           office_accessibility_value: string | null
           rpi_count: number | null
           session_duration_seconds: number | null
@@ -41,6 +42,7 @@ export type Database = {
           cost_value?: string | null
           id?: string
           insurance_accepted_value?: string | null
+          max_time_willing_minutes?: number | null
           office_accessibility_value?: string | null
           rpi_count?: number | null
           session_duration_seconds?: number | null
@@ -61,6 +63,7 @@ export type Database = {
           cost_value?: string | null
           id?: string
           insurance_accepted_value?: string | null
+          max_time_willing_minutes?: number | null
           office_accessibility_value?: string | null
           rpi_count?: number | null
           session_duration_seconds?: number | null
@@ -90,6 +93,7 @@ export type Database = {
           completed_successfully: boolean | null
           drop_off_step: string | null
           id: string
+          max_time_willing_minutes: number | null
           session_id: string
           step_1_complete: string | null
           step_1_start: string | null
@@ -107,6 +111,7 @@ export type Database = {
           completed_successfully?: boolean | null
           drop_off_step?: string | null
           id?: string
+          max_time_willing_minutes?: number | null
           session_id: string
           step_1_complete?: string | null
           step_1_start?: string | null
@@ -124,6 +129,7 @@ export type Database = {
           completed_successfully?: boolean | null
           drop_off_step?: string | null
           id?: string
+          max_time_willing_minutes?: number | null
           session_id?: string
           step_1_complete?: string | null
           step_1_start?: string | null
@@ -156,6 +162,7 @@ export type Database = {
           incentive_shown_at: string | null
           initial_prompt_at: string | null
           initial_prompt_response: Database["public"]["Enums"]["contribution_response"]
+          max_time_willing_minutes: number | null
           post_incentive_response:
             | Database["public"]["Enums"]["contribution_response"]
             | null
@@ -172,6 +179,7 @@ export type Database = {
           incentive_shown_at?: string | null
           initial_prompt_at?: string | null
           initial_prompt_response: Database["public"]["Enums"]["contribution_response"]
+          max_time_willing_minutes?: number | null
           post_incentive_response?:
             | Database["public"]["Enums"]["contribution_response"]
             | null
@@ -188,6 +196,7 @@ export type Database = {
           incentive_shown_at?: string | null
           initial_prompt_at?: string | null
           initial_prompt_response?: Database["public"]["Enums"]["contribution_response"]
+          max_time_willing_minutes?: number | null
           post_incentive_response?:
             | Database["public"]["Enums"]["contribution_response"]
             | null

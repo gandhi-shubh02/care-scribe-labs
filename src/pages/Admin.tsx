@@ -416,6 +416,7 @@ export default function Admin() {
                       <TableHead>Appt Type</TableHead>
                       <TableHead>Insurance</TableHead>
                       <TableHead>Accessibility</TableHead>
+                      <TableHead>Max Time</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -432,6 +433,7 @@ export default function Admin() {
                         <TableCell>{resp.share_appointment_type ? "✓" : "✗"}</TableCell>
                         <TableCell>{resp.share_insurance_accepted ? "✓" : "✗"}</TableCell>
                         <TableCell>{resp.share_office_accessibility ? "✓" : "✗"}</TableCell>
+                        <TableCell>{resp.max_time_willing_minutes ? `${resp.max_time_willing_minutes}m` : "N/A"}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -459,6 +461,7 @@ export default function Admin() {
                       <TableHead>Step 3</TableHead>
                       <TableHead>Completed</TableHead>
                       <TableHead>Drop Off</TableHead>
+                      <TableHead>Max Time</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -483,6 +486,7 @@ export default function Admin() {
                           <TableCell>{step3Duration !== null ? `${step3Duration}s` : "N/A"}</TableCell>
                           <TableCell>{resp.completed_successfully ? "✓" : "✗"}</TableCell>
                           <TableCell className="text-xs">{resp.drop_off_step || "N/A"}</TableCell>
+                          <TableCell>{resp.max_time_willing_minutes ? `${resp.max_time_willing_minutes}m` : "N/A"}</TableCell>
                         </TableRow>
                       );
                     })}
@@ -510,6 +514,7 @@ export default function Admin() {
                       <TableHead>Incentive</TableHead>
                       <TableHead>Post-Incentive</TableHead>
                       <TableHead>Final</TableHead>
+                      <TableHead>Max Time</TableHead>
                       <TableHead>Review Text</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -524,6 +529,7 @@ export default function Admin() {
                         <TableCell>{resp.incentive_shown ? "Shown" : "Not shown"}</TableCell>
                         <TableCell>{resp.post_incentive_response || "N/A"}</TableCell>
                         <TableCell>{resp.final_contributed ? "✓" : "✗"}</TableCell>
+                        <TableCell>{resp.max_time_willing_minutes ? `${resp.max_time_willing_minutes}m` : "N/A"}</TableCell>
                         <TableCell className="max-w-xs truncate text-xs">
                           {resp.review_text || "N/A"}
                         </TableCell>

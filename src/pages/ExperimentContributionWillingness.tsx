@@ -6,8 +6,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Shield, CheckCircle2, Gift, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-type Stage = "initial" | "incentive" | "final" | "complete";
+type Stage = "initial" | "incentive" | "final" | "maxtime" | "complete";
 
 export default function ExperimentContributionWillingness() {
   const { toast } = useToast();
@@ -23,6 +24,7 @@ export default function ExperimentContributionWillingness() {
   const [initialPromptTime] = useState<Date>(new Date());
   const [incentiveShownTime, setIncentiveShownTime] = useState<Date | null>(null);
   const [finalDecisionTime, setFinalDecisionTime] = useState<Date | null>(null);
+  const [maxTimeWilling, setMaxTimeWilling] = useState<string>("");
 
   useEffect(() => {
     const initSession = async () => {
@@ -63,7 +65,11 @@ export default function ExperimentContributionWillingness() {
   const handleReviewSubmit = () => {
     const decisionTime = new Date();
     setFinalDecisionTime(decisionTime);
-    submitData(initialResponse!, showedIncentive, postIncentiveResponse, finalContributed, decisionTime);
+    setStage("maxtime");
+  };
+
+  const handleMaxTimeSubmit = () => {
+    submitData(initialResponse!, showedIncentive, postIncentiveResponse, finalContributed, finalDecisionTime || new Date());
   };
 
   const submitData = async (
@@ -92,6 +98,7 @@ export default function ExperimentContributionWillingness() {
       incentive_shown_at: incentiveShownTime?.toISOString(),
       final_decision_at: decisionTime.toISOString(),
       total_duration_seconds: totalDurationSeconds,
+      max_time_willing_minutes: maxTimeWilling ? parseInt(maxTimeWilling) : null,
     });
     if (contribError) console.error("Failed to insert exp3 contribution:", contribError);
     else console.log("Exp3 contribution recorded successfully");
@@ -99,6 +106,37 @@ export default function ExperimentContributionWillingness() {
     toast({ title: "Response Recorded", description: "Thank you for participating!" });
     setStage("complete");
   };
+
+  if (stage === "maxtime") {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="max-w-md p-8">
+          <CheckCircle2 className="h-16 w-16 text-primary mx-auto mb-4" />
+          <h2 className="text-2xl font-bold mb-4 text-center">One Last Question</h2>
+          
+          <div className="space-y-4">
+            <label className="text-sm font-medium">What's the maximum time you'd spend on a review prompt like this before giving up?</label>
+            <Select value={maxTimeWilling} onValueChange={setMaxTimeWilling}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select time..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">Less than 1 minute</SelectItem>
+                <SelectItem value="2">1-2 minutes</SelectItem>
+                <SelectItem value="5">3-5 minutes</SelectItem>
+                <SelectItem value="10">5-10 minutes</SelectItem>
+                <SelectItem value="15">10-15 minutes</SelectItem>
+                <SelectItem value="0">I would give up immediately</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button onClick={handleMaxTimeSubmit} className="w-full" disabled={!maxTimeWilling}>
+              Complete Experiment
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   if (stage === "complete") {
     return (
