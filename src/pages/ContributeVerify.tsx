@@ -27,11 +27,67 @@ export default function ContributeVerify() {
   const [uploadedIdDoc, setUploadedIdDoc] = useState(false);
   const [uploadedMedicalBill, setUploadedMedicalBill] = useState(false);
   const [uploadedSelfie, setUploadedSelfie] = useState(false);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
+  
+  // Webcam state
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [cameraActive, setCameraActive] = useState(false);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
-  const launchCamera = () => {
-    cameraInputRef.current?.click();
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: "user" } 
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+      setCameraActive(true);
+    } catch (err) {
+      toast({
+        title: "Camera Error",
+        description: "Could not access camera. Please allow camera permissions.",
+        variant: "destructive"
+      });
+    }
   };
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    setCameraActive(false);
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current) {
+      const canvas = document.createElement("canvas");
+      canvas.width = videoRef.current.videoWidth;
+      canvas.height = videoRef.current.videoHeight;
+      canvas.getContext("2d")?.drawImage(videoRef.current, 0, 0);
+      const imageData = canvas.toDataURL("image/jpeg");
+      setCapturedImage(imageData);
+      setUploadedSelfie(true);
+      stopCamera();
+    }
+  };
+
+  const retakePhoto = () => {
+    setCapturedImage(null);
+    setUploadedSelfie(false);
+    startCamera();
+  };
+
+  // Cleanup camera on unmount
+  useEffect(() => {
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, []);
 
   // Initialize session
   useEffect(() => {
@@ -256,48 +312,57 @@ export default function ContributeVerify() {
             <p className="text-muted-foreground mb-6">
               Take a selfie holding your ID next to your face for verification.
             </p>
-            <input 
-              ref={cameraInputRef}
-              type="file" 
-              accept="image/*"
-              capture="environment"
-              className="hidden"
-              onChange={(e) => handleFileUpload(3, e)}
-            />
-            <div className="border-2 border-border rounded-lg p-8 mb-6 bg-muted/30">
-              <div className={`h-48 w-48 mx-auto bg-background rounded-lg flex flex-col items-center justify-center border-2 border-dashed mb-4 ${uploadedSelfie ? 'border-primary' : 'border-border'}`}>
-                <Camera className={`h-12 w-12 mb-3 ${uploadedSelfie ? 'text-primary' : 'text-muted-foreground'}`} />
-                <p className="text-sm text-muted-foreground">
-                  {uploadedSelfie ? "✓ Photo captured" : "No photo yet"}
-                </p>
-              </div>
-              <div className="flex gap-3 justify-center">
-                <Button 
-                  type="button" 
-                  variant="outline"
-                  onClick={launchCamera}
-                  className="flex-1"
-                >
-                  <Camera className="h-4 w-4 mr-2" />
-                  Take Photo
-                </Button>
-                <label className="flex-1">
-                  <input 
-                    type="file" 
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => handleFileUpload(3, e)}
+            <div className="border-2 border-border rounded-lg p-4 mb-6 bg-muted/30">
+              {/* Camera preview or captured image */}
+              <div className="relative aspect-video max-w-md mx-auto bg-background rounded-lg overflow-hidden mb-4">
+                {cameraActive && !capturedImage && (
+                  <video 
+                    ref={videoRef} 
+                    autoPlay 
+                    playsInline 
+                    muted
+                    className="w-full h-full object-cover"
                   />
-                  <Button type="button" variant="outline" className="w-full" asChild>
-                    <span>
-                      <Upload className="h-4 w-4 mr-2" />
-                      Upload
-                    </span>
+                )}
+                {capturedImage && (
+                  <img src={capturedImage} alt="Captured selfie" className="w-full h-full object-cover" />
+                )}
+                {!cameraActive && !capturedImage && (
+                  <div className="w-full h-full flex flex-col items-center justify-center border-2 border-dashed border-border">
+                    <Camera className="h-12 w-12 mb-3 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">Camera preview</p>
+                  </div>
+                )}
+              </div>
+              
+              {/* Camera controls */}
+              <div className="flex gap-3 justify-center">
+                {!cameraActive && !capturedImage && (
+                  <Button type="button" onClick={startCamera} className="flex-1">
+                    <Camera className="h-4 w-4 mr-2" />
+                    Start Camera
                   </Button>
-                </label>
+                )}
+                {cameraActive && !capturedImage && (
+                  <>
+                    <Button type="button" onClick={capturePhoto} className="flex-1">
+                      <Camera className="h-4 w-4 mr-2" />
+                      Capture Photo
+                    </Button>
+                    <Button type="button" variant="outline" onClick={stopCamera}>
+                      Cancel
+                    </Button>
+                  </>
+                )}
+                {capturedImage && (
+                  <Button type="button" variant="outline" onClick={retakePhoto} className="flex-1">
+                    <Camera className="h-4 w-4 mr-2" />
+                    Retake Photo
+                  </Button>
+                )}
               </div>
             </div>
-            <Button onClick={handleStep3Complete} className="w-full bg-gradient-primary" disabled={processing}>
+            <Button onClick={handleStep3Complete} className="w-full bg-gradient-primary" disabled={processing || !uploadedSelfie}>
               {processing ? processingMessage : "Complete Verification"}
             </Button>
           </Card>
