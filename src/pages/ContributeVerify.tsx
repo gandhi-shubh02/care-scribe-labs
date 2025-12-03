@@ -260,19 +260,41 @@ export default function ContributeVerify() {
               ref={cameraInputRef}
               type="file" 
               accept="image/*"
-              capture="user"
+              capture="environment"
               className="hidden"
               onChange={(e) => handleFileUpload(3, e)}
             />
-            <div 
-              onClick={launchCamera}
-              className="border-2 border-border rounded-lg p-12 mb-6 bg-muted/30 text-center cursor-pointer hover:border-primary transition-colors"
-            >
-              <div className={`h-48 w-48 mx-auto bg-background rounded-lg flex flex-col items-center justify-center border-2 border-dashed ${uploadedSelfie ? 'border-primary' : 'border-border'}`}>
+            <div className="border-2 border-border rounded-lg p-8 mb-6 bg-muted/30">
+              <div className={`h-48 w-48 mx-auto bg-background rounded-lg flex flex-col items-center justify-center border-2 border-dashed mb-4 ${uploadedSelfie ? 'border-primary' : 'border-border'}`}>
                 <Camera className={`h-12 w-12 mb-3 ${uploadedSelfie ? 'text-primary' : 'text-muted-foreground'}`} />
                 <p className="text-sm text-muted-foreground">
-                  {uploadedSelfie ? "✓ Photo taken" : "Tap to open camera"}
+                  {uploadedSelfie ? "✓ Photo captured" : "No photo yet"}
                 </p>
+              </div>
+              <div className="flex gap-3 justify-center">
+                <Button 
+                  type="button" 
+                  variant="outline"
+                  onClick={launchCamera}
+                  className="flex-1"
+                >
+                  <Camera className="h-4 w-4 mr-2" />
+                  Take Photo
+                </Button>
+                <label className="flex-1">
+                  <input 
+                    type="file" 
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => handleFileUpload(3, e)}
+                  />
+                  <Button type="button" variant="outline" className="w-full" asChild>
+                    <span>
+                      <Upload className="h-4 w-4 mr-2" />
+                      Upload
+                    </span>
+                  </Button>
+                </label>
               </div>
             </div>
             <Button onClick={handleStep3Complete} className="w-full bg-gradient-primary" disabled={processing}>
