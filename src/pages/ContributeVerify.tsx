@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Shield, Upload, CheckCircle2, X } from "lucide-react";
+import { Shield, Upload, CheckCircle2, X, Camera } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -27,6 +27,11 @@ export default function ContributeVerify() {
   const [uploadedIdDoc, setUploadedIdDoc] = useState(false);
   const [uploadedMedicalBill, setUploadedMedicalBill] = useState(false);
   const [uploadedSelfie, setUploadedSelfie] = useState(false);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+
+  const launchCamera = () => {
+    cameraInputRef.current?.click();
+  };
 
   // Initialize session
   useEffect(() => {
@@ -85,7 +90,6 @@ export default function ContributeVerify() {
     
     setTimeout(async () => {
       const now = new Date();
-      const step3End = now;
       const totalDuration = Math.floor((now.getTime() - startTime!.getTime()) / 1000);
 
       await supabase.from("experiment_sessions").update({
@@ -122,7 +126,7 @@ export default function ContributeVerify() {
         ? `/contribute/review?provider=${providerId}` 
         : "/contribute/review";
       navigate(reviewUrl);
-    }, 1800);
+    }, 7000);
   };
 
   const handleAbandon = async () => {
@@ -252,20 +256,25 @@ export default function ContributeVerify() {
             <p className="text-muted-foreground mb-6">
               Take a selfie holding your ID next to your face for verification.
             </p>
-            <label className="border-2 border-border rounded-lg p-12 mb-6 bg-muted/30 text-center block cursor-pointer hover:border-primary transition-colors">
-              <input 
-                type="file" 
-                accept="image/*"
-                capture="user"
-                className="hidden"
-                onChange={(e) => handleFileUpload(3, e)}
-              />
-              <div className={`h-48 w-48 mx-auto bg-background rounded-lg flex items-center justify-center border-2 border-dashed ${uploadedSelfie ? 'border-primary' : 'border-border'}`}>
+            <input 
+              ref={cameraInputRef}
+              type="file" 
+              accept="image/*"
+              capture="user"
+              className="hidden"
+              onChange={(e) => handleFileUpload(3, e)}
+            />
+            <div 
+              onClick={launchCamera}
+              className="border-2 border-border rounded-lg p-12 mb-6 bg-muted/30 text-center cursor-pointer hover:border-primary transition-colors"
+            >
+              <div className={`h-48 w-48 mx-auto bg-background rounded-lg flex flex-col items-center justify-center border-2 border-dashed ${uploadedSelfie ? 'border-primary' : 'border-border'}`}>
+                <Camera className={`h-12 w-12 mb-3 ${uploadedSelfie ? 'text-primary' : 'text-muted-foreground'}`} />
                 <p className="text-sm text-muted-foreground">
-                  {uploadedSelfie ? "✓ Photo taken" : "Tap to take photo"}
+                  {uploadedSelfie ? "✓ Photo taken" : "Tap to open camera"}
                 </p>
               </div>
-            </label>
+            </div>
             <Button onClick={handleStep3Complete} className="w-full bg-gradient-primary" disabled={processing}>
               {processing ? processingMessage : "Complete Verification"}
             </Button>
