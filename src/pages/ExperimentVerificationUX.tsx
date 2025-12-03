@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Shield, Upload, CheckCircle2, Clock, X, Camera } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type Step = 1 | 2 | 3;
 
@@ -21,6 +22,8 @@ export default function ExperimentVerificationUX() {
   const [step3Complete, setStep3Complete] = useState<Date | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [submitted, setSubmitted] = useState(false);
+  const [showMaxTimeQuestion, setShowMaxTimeQuestion] = useState(false);
+  const [maxTimeWilling, setMaxTimeWilling] = useState<string>("");
   const [processing, setProcessing] = useState(false);
   const [processingMessage, setProcessingMessage] = useState("");
   const [uploadedIdDoc, setUploadedIdDoc] = useState(false);
@@ -160,41 +163,46 @@ export default function ExperimentVerificationUX() {
     setTimeout(async () => {
       const now = new Date();
       setStep3Complete(now);
-
-      const totalDuration = Math.floor((now.getTime() - startTime!.getTime()) / 1000);
-
-      const { error: sessionError } = await supabase.from("experiment_sessions").update({
-        status: "completed",
-        completed_at: now.toISOString(),
-      }).eq("id", sessionId);
-      if (sessionError) console.error("Failed to update exp2 session:", sessionError);
-
-      const { error: flowError } = await supabase.from("exp2_verification_flow").insert({
-        session_id: sessionId,
-        step_1_start: step1Start?.toISOString(),
-        step_1_complete: step1Complete?.toISOString(),
-        step_2_start: step2Start?.toISOString(),
-        step_2_complete: step2Complete?.toISOString(),
-        step_3_start: step3Start?.toISOString(),
-        step_3_complete: now.toISOString(),
-        total_duration_seconds: totalDuration,
-        completed_successfully: true,
-        drop_off_step: null,
-        uploaded_id_document: uploadedIdDoc,
-        uploaded_medical_bill: uploadedMedicalBill,
-        uploaded_selfie: uploadedSelfie,
-      });
-      if (flowError) console.error("Failed to insert exp2 flow:", flowError);
-      else console.log("Exp2 flow recorded successfully");
-
       setProcessing(false);
       setProcessingMessage("");
-      setSubmitted(true);
-      toast({
-        title: "Experiment Complete!",
-        description: `Completed in ${totalDuration} seconds`,
-      });
+      setShowMaxTimeQuestion(true);
     }, 1800);
+  };
+
+  const handleFinalSubmit = async () => {
+    const now = new Date();
+    const totalDuration = Math.floor((now.getTime() - startTime!.getTime()) / 1000);
+
+    const { error: sessionError } = await supabase.from("experiment_sessions").update({
+      status: "completed",
+      completed_at: now.toISOString(),
+    }).eq("id", sessionId);
+    if (sessionError) console.error("Failed to update exp2 session:", sessionError);
+
+    const { error: flowError } = await supabase.from("exp2_verification_flow").insert({
+      session_id: sessionId,
+      step_1_start: step1Start?.toISOString(),
+      step_1_complete: step1Complete?.toISOString(),
+      step_2_start: step2Start?.toISOString(),
+      step_2_complete: step2Complete?.toISOString(),
+      step_3_start: step3Start?.toISOString(),
+      step_3_complete: step3Complete?.toISOString(),
+      total_duration_seconds: totalDuration,
+      completed_successfully: true,
+      drop_off_step: null,
+      uploaded_id_document: uploadedIdDoc,
+      uploaded_medical_bill: uploadedMedicalBill,
+      uploaded_selfie: uploadedSelfie,
+      max_time_willing_minutes: maxTimeWilling ? parseInt(maxTimeWilling) : null,
+    });
+    if (flowError) console.error("Failed to insert exp2 flow:", flowError);
+    else console.log("Exp2 flow recorded successfully");
+
+    setSubmitted(true);
+    toast({
+      title: "Experiment Complete!",
+      description: `Completed in ${totalDuration} seconds`,
+    });
   };
 
   const handleAbandon = async () => {
@@ -219,6 +227,39 @@ export default function ExperimentVerificationUX() {
     toast({ title: "Session Abandoned", description: "Your data has been recorded." });
     setSubmitted(true);
   };
+
+  if (showMaxTimeQuestion && !submitted) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="max-w-md p-8">
+          <CheckCircle2 className="h-16 w-16 text-primary mx-auto mb-4" />
+          <h2 className="text-2xl font-bold mb-2 text-center">Almost Done!</h2>
+          <p className="text-muted-foreground mb-2 text-center">Time: {elapsedSeconds} seconds</p>
+          <p className="text-sm text-muted-foreground mb-6 text-center">One quick question before we finish:</p>
+          
+          <div className="space-y-4">
+            <label className="text-sm font-medium">What's the maximum time you'd spend on a verification flow like this before giving up?</label>
+            <Select value={maxTimeWilling} onValueChange={setMaxTimeWilling}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select time..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">Less than 1 minute</SelectItem>
+                <SelectItem value="2">1-2 minutes</SelectItem>
+                <SelectItem value="5">3-5 minutes</SelectItem>
+                <SelectItem value="10">5-10 minutes</SelectItem>
+                <SelectItem value="15">10-15 minutes</SelectItem>
+                <SelectItem value="0">I would give up immediately</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button onClick={handleFinalSubmit} className="w-full" disabled={!maxTimeWilling}>
+              Complete Experiment
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   if (submitted) {
     return (

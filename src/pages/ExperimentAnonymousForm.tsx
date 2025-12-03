@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Shield, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function ExperimentAnonymousForm() {
   const { toast } = useToast();
@@ -23,12 +24,18 @@ export default function ExperimentAnonymousForm() {
   const [shareOfficeAccessibility, setShareOfficeAccessibility] = useState(false);
   const [officeAccessibilityValue, setOfficeAccessibilityValue] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [showMaxTimeQuestion, setShowMaxTimeQuestion] = useState(false);
+  const [maxTimeWilling, setMaxTimeWilling] = useState<string>("");
   const [startTime] = useState<Date>(new Date());
 
   useEffect(() => {
     // Track session start time in component mount
     console.log("Experiment 1 started at:", startTime.toISOString());
   }, [startTime]);
+
+  const handleContinueToMaxTime = () => {
+    setShowMaxTimeQuestion(true);
+  };
 
   const handleSubmit = async () => {
     const sessionId = crypto.randomUUID();
@@ -62,6 +69,7 @@ export default function ExperimentAnonymousForm() {
       rpi_count: rpiCount,
       session_start_at: startTime.toISOString(),
       session_duration_seconds: durationSeconds,
+      max_time_willing_minutes: maxTimeWilling ? parseInt(maxTimeWilling) : null,
     });
 
     console.log("Experiment 1 completed in", durationSeconds, "seconds");
@@ -145,7 +153,27 @@ export default function ExperimentAnonymousForm() {
               {shareOfficeAccessibility && <Input placeholder="e.g., Wheelchair accessible, elevator available" value={officeAccessibilityValue} onChange={(e) => setOfficeAccessibilityValue(e.target.value)} />}
             </div>
 
-            <Button onClick={handleSubmit} className="w-full">Submit Response</Button>
+            {!showMaxTimeQuestion ? (
+              <Button onClick={handleContinueToMaxTime} className="w-full">Continue</Button>
+            ) : (
+              <div className="space-y-4 pt-4 border-t border-border">
+                <Label className="text-base font-semibold">What's the maximum time you'd spend on a form like this before giving up?</Label>
+                <Select value={maxTimeWilling} onValueChange={setMaxTimeWilling}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select time..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">Less than 1 minute</SelectItem>
+                    <SelectItem value="2">1-2 minutes</SelectItem>
+                    <SelectItem value="5">3-5 minutes</SelectItem>
+                    <SelectItem value="10">5-10 minutes</SelectItem>
+                    <SelectItem value="15">10-15 minutes</SelectItem>
+                    <SelectItem value="0">I would give up immediately</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button onClick={handleSubmit} className="w-full" disabled={!maxTimeWilling}>Submit Response</Button>
+              </div>
+            )}
           </div>
         </Card>
       </div>
