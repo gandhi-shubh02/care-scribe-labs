@@ -63,7 +63,7 @@ export default function ContributeVerify() {
       setCurrentStep(2);
       setProcessing(false);
       setProcessingMessage("");
-    }, 2000);
+    }, 7000);
   };
 
   const handleStep2Complete = () => {
@@ -76,7 +76,7 @@ export default function ContributeVerify() {
       setCurrentStep(3);
       setProcessing(false);
       setProcessingMessage("");
-    }, 2500);
+    }, 7000);
   };
 
   const handleStep3Complete = () => {
@@ -85,6 +85,7 @@ export default function ContributeVerify() {
     
     setTimeout(async () => {
       const now = new Date();
+      const step3End = now;
       const totalDuration = Math.floor((now.getTime() - startTime!.getTime()) / 1000);
 
       await supabase.from("experiment_sessions").update({
