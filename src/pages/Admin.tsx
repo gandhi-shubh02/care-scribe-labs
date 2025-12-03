@@ -453,28 +453,39 @@ export default function Admin() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Time</TableHead>
-                      <TableHead>Duration</TableHead>
+                      <TableHead>Total</TableHead>
+                      <TableHead>Step 1</TableHead>
+                      <TableHead>Step 2</TableHead>
+                      <TableHead>Step 3</TableHead>
                       <TableHead>Completed</TableHead>
                       <TableHead>Drop Off</TableHead>
-                      <TableHead>ID Upload</TableHead>
-                      <TableHead>Medical Bill</TableHead>
-                      <TableHead>Selfie</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {exp2Responses.map((resp) => (
-                      <TableRow key={resp.id}>
-                        <TableCell className="text-xs">
-                          {resp.submitted_at ? new Date(resp.submitted_at).toLocaleString() : "N/A"}
-                        </TableCell>
-                        <TableCell>{resp.total_duration_seconds}s</TableCell>
-                        <TableCell>{resp.completed_successfully ? "✓" : "✗"}</TableCell>
-                        <TableCell className="text-xs">{resp.drop_off_step || "N/A"}</TableCell>
-                        <TableCell>{resp.uploaded_id_document ? "Yes" : "No"}</TableCell>
-                        <TableCell>{resp.uploaded_medical_bill ? "Yes" : "No"}</TableCell>
-                        <TableCell>{resp.uploaded_selfie ? "Yes" : "No"}</TableCell>
-                      </TableRow>
-                    ))}
+                    {exp2Responses.map((resp) => {
+                      const step1Duration = resp.step_1_start && resp.step_1_complete 
+                        ? Math.round((new Date(resp.step_1_complete).getTime() - new Date(resp.step_1_start).getTime()) / 1000)
+                        : null;
+                      const step2Duration = resp.step_2_start && resp.step_2_complete 
+                        ? Math.round((new Date(resp.step_2_complete).getTime() - new Date(resp.step_2_start).getTime()) / 1000)
+                        : null;
+                      const step3Duration = resp.step_3_start && resp.step_3_complete 
+                        ? Math.round((new Date(resp.step_3_complete).getTime() - new Date(resp.step_3_start).getTime()) / 1000)
+                        : null;
+                      return (
+                        <TableRow key={resp.id}>
+                          <TableCell className="text-xs">
+                            {resp.submitted_at ? new Date(resp.submitted_at).toLocaleString() : "N/A"}
+                          </TableCell>
+                          <TableCell>{resp.total_duration_seconds}s</TableCell>
+                          <TableCell>{step1Duration !== null ? `${step1Duration}s` : "N/A"}</TableCell>
+                          <TableCell>{step2Duration !== null ? `${step2Duration}s` : "N/A"}</TableCell>
+                          <TableCell>{step3Duration !== null ? `${step3Duration}s` : "N/A"}</TableCell>
+                          <TableCell>{resp.completed_successfully ? "✓" : "✗"}</TableCell>
+                          <TableCell className="text-xs">{resp.drop_off_step || "N/A"}</TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
