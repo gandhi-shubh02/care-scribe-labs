@@ -63,14 +63,22 @@ export default function ContributeVerify() {
 
   const capturePhoto = () => {
     if (videoRef.current) {
+      const video = videoRef.current;
+      // Use actual video dimensions, fallback to display dimensions
+      const width = video.videoWidth || video.clientWidth || 640;
+      const height = video.videoHeight || video.clientHeight || 480;
+      
       const canvas = document.createElement("canvas");
-      canvas.width = videoRef.current.videoWidth;
-      canvas.height = videoRef.current.videoHeight;
-      canvas.getContext("2d")?.drawImage(videoRef.current, 0, 0);
-      const imageData = canvas.toDataURL("image/jpeg");
-      setCapturedImage(imageData);
-      setUploadedSelfie(true);
-      stopCamera();
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.drawImage(video, 0, 0, width, height);
+        const imageData = canvas.toDataURL("image/jpeg", 0.9);
+        setCapturedImage(imageData);
+        setUploadedSelfie(true);
+        stopCamera();
+      }
     }
   };
 
