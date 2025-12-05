@@ -215,7 +215,7 @@ export default function ContributeVerify() {
               </p>
               <p className="text-xs text-muted-foreground mt-1">Accepted: JPG, PNG, PDF (max 5MB)</p>
             </label>
-            <Button onClick={handleStep1Complete} className="w-full" disabled={processing}>
+            <Button onClick={handleStep1Complete} className="w-full" disabled={processing || !uploadedIdDoc}>
               {processing ? processingMessage : "Continue to Next Step"}
             </Button>
           </Card>
@@ -240,7 +240,7 @@ export default function ContributeVerify() {
               </p>
               <p className="text-xs text-muted-foreground mt-1">Accepted: JPG, PNG, PDF (max 10MB)</p>
             </label>
-            <Button onClick={handleStep2Complete} className="w-full" disabled={processing}>
+            <Button onClick={handleStep2Complete} className="w-full" disabled={processing || !uploadedMedicalBill}>
               {processing ? processingMessage : "Continue to Next Step"}
             </Button>
           </Card>
