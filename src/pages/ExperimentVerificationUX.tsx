@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Shield, Upload, CheckCircle2, Clock, X, Camera } from "lucide-react";
+import { Shield, Upload, CheckCircle2, Clock, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -30,74 +30,6 @@ export default function ExperimentVerificationUX() {
   const [uploadedMedicalBill, setUploadedMedicalBill] = useState(false);
   const [uploadedSelfie, setUploadedSelfie] = useState(false);
 
-  // Webcam state
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [cameraActive, setCameraActive] = useState(false);
-  const [capturedImage, setCapturedImage] = useState<string | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-
-  const startCamera = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: "user" } 
-      });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
-      setCameraActive(true);
-    } catch (err) {
-      toast({
-        title: "Camera Error",
-        description: "Could not access camera. Please allow camera permissions.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const stopCamera = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
-    }
-    setCameraActive(false);
-  };
-
-  const capturePhoto = () => {
-    if (videoRef.current) {
-      const video = videoRef.current;
-      // Use actual video dimensions, fallback to display dimensions
-      const width = video.videoWidth || video.clientWidth || 640;
-      const height = video.videoHeight || video.clientHeight || 480;
-      
-      const canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext("2d");
-      if (ctx) {
-        ctx.drawImage(video, 0, 0, width, height);
-        const imageData = canvas.toDataURL("image/jpeg", 0.9);
-        setCapturedImage(imageData);
-        setUploadedSelfie(true);
-        stopCamera();
-      }
-    }
-  };
-
-  const retakePhoto = () => {
-    setCapturedImage(null);
-    setUploadedSelfie(false);
-    startCamera();
-  };
-
-  // Cleanup camera on unmount
-  useEffect(() => {
-    return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-      }
-    };
-  }, []);
 
   // Initialize experiment session
   useEffect(() => {
@@ -390,60 +322,23 @@ export default function ExperimentVerificationUX() {
 
         {currentStep === 3 && (
           <Card className="p-8 animate-in fade-in duration-300">
-            <h2 className="text-2xl font-bold mb-4">Step 3: Take a Quick Photo</h2>
+            <h2 className="text-2xl font-bold mb-4">Step 3: Upload a Selfie</h2>
             <p className="text-muted-foreground mb-6">
-              Take a selfie holding your ID next to your face for verification.
+              Upload a selfie holding your ID next to your face for verification.
             </p>
-            <div className="border-2 border-border rounded-lg p-4 mb-6 bg-muted/30">
-              {/* Camera preview or captured image */}
-              <div className="relative aspect-video max-w-md mx-auto bg-background rounded-lg overflow-hidden mb-4">
-                {cameraActive && !capturedImage && (
-                  <video 
-                    ref={videoRef} 
-                    autoPlay 
-                    playsInline 
-                    muted
-                    className="w-full h-full object-cover"
-                  />
-                )}
-                {capturedImage && (
-                  <img src={capturedImage} alt="Captured selfie" className="w-full h-full object-cover" />
-                )}
-                {!cameraActive && !capturedImage && (
-                  <div className="w-full h-full flex flex-col items-center justify-center border-2 border-dashed border-border">
-                    <Camera className="h-12 w-12 mb-3 text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">Camera preview</p>
-                  </div>
-                )}
-              </div>
-              
-              {/* Camera controls */}
-              <div className="flex gap-3 justify-center">
-                {!cameraActive && !capturedImage && (
-                  <Button type="button" onClick={startCamera} className="flex-1">
-                    <Camera className="h-4 w-4 mr-2" />
-                    Start Camera
-                  </Button>
-                )}
-                {cameraActive && !capturedImage && (
-                  <>
-                    <Button type="button" onClick={capturePhoto} className="flex-1">
-                      <Camera className="h-4 w-4 mr-2" />
-                      Capture Photo
-                    </Button>
-                    <Button type="button" variant="outline" onClick={stopCamera}>
-                      Cancel
-                    </Button>
-                  </>
-                )}
-                {capturedImage && (
-                  <Button type="button" variant="outline" onClick={retakePhoto} className="flex-1">
-                    <Camera className="h-4 w-4 mr-2" />
-                    Retake Photo
-                  </Button>
-                )}
-              </div>
-            </div>
+            <label className="border-2 border-dashed border-border rounded-lg p-12 mb-6 text-center hover:border-primary transition-colors cursor-pointer block">
+              <input 
+                type="file" 
+                accept=".jpg,.jpeg,.png"
+                className="hidden"
+                onChange={(e) => handleFileUpload(3, e)}
+              />
+              <Upload className={`h-12 w-12 mx-auto mb-3 ${uploadedSelfie ? 'text-primary' : 'text-muted-foreground'}`} />
+              <p className="text-sm text-muted-foreground">
+                {uploadedSelfie ? "✓ File selected" : "Click or drag file to upload"}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">Accepted: JPG, PNG (max 5MB)</p>
+            </label>
             <Button onClick={handleStep3Complete} className="w-full bg-gradient-primary" disabled={processing || !uploadedSelfie}>
               {processing ? processingMessage : "Complete Verification"}
             </Button>
